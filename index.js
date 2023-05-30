@@ -2,13 +2,7 @@ const express = require("express");
 const app = express();
 const server = require("http").createServer(app);
 const port = process.env.PORT || 3000;
-const io = require("socket.io")(server, {
-  cors: {
-    origin: "https://pixelwood.web.app",
-    methods: ["GET", "POST"],
-    allowedHeaders: ["Access-Control-Allow-Origin"],
-  }
-});
+const io = require("socket.io")(server, { cors: { origin: "*" } });
 const randomName = require("@jkeesee/random-name");
 const Filter = require("bad-words");
 const filter = new Filter();
