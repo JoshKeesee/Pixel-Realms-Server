@@ -23,8 +23,8 @@ const players = new Map();
 let map = [
   {
     type: "woods",
-    cols: 22,
-    rows: 22,
+    cols: 30,
+    rows: 30,
     layers: {
       ground: [],
       scenery: [],
