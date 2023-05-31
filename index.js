@@ -158,12 +158,8 @@ io.on("connection", socket => {
   });
 
   socket.on("update map", d => {
-    const data = d[0], s = d[1];
-    if (!data || !s) return;
-    Object.keys(data).forEach(k => {
-      map[s][k] = data[k];
-    });
-    socket.broadcast.emit("update map", [data, s]);
+    map[d[1]] = d[0];
+    socket.broadcast.emit("update map", d);
   });
 
   socket.on("delete map", s => {
@@ -233,6 +229,4 @@ const daylightLoop = () => {
 
 daylightLoop();
 
-server.listen(port, () => {
-  console.log(`Server listening on port ${port}`)
-});
+server.listen(port, () => console.log(`Server listening on port ${port}`));
