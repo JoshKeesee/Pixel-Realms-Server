@@ -28,9 +28,9 @@ let map = [
     layers: {
       ground: [],
       scenery: [],
-      break: [],
-      structure: [],
     },
+    break: {},
+    structure: {},
     text: {},
     chest: {},
     teleport: {},
@@ -40,6 +40,8 @@ let map = [
 let daylight = 0;
 
 function resetMap() {
+  map[0].break = {};
+  map[0].structure = {};
   map[0].text = {};
   map[0].chest = {};
   map[0].teleport = {};
@@ -47,8 +49,6 @@ function resetMap() {
   for (let i = 0; i < map[0].cols * map[0].rows; i++) {
     map[0].layers.ground[i] = 0;
     map[0].layers.scenery[i] = -1;
-    map[0].layers.break[i] = -1;
-    map[0].layers.structure[i] = -1;
   }
 
   for (let i = 0; i < map[0].cols; i++) {
@@ -111,10 +111,12 @@ function defaultPlayer(id) {
   }
 }
 
-resetMap();
 mapRef.on("value", snapshot => {
   if (snapshot.val() != null) map = snapshot.val();
+  else resetMap();
   map.forEach(m => {
+    if (!m.break) m.break = {};
+    if (!m.structure) m.structure = {};
     if (!m.text) m.text = {};
     if (!m.chest) m.chest = {};
     if (!m.teleport) m.teleport = {};
@@ -155,9 +157,19 @@ io.on("connection", socket => {
     socket.broadcast.emit("update player", players.get(socket.id));
   });
 
-  socket.on("update map", data => {
-    map = data;
-    socket.broadcast.emit("update map", map);
+  socket.on("update map", d => {
+    const data = d[0], s = d[1];
+    if (!data || !s) return;
+    Object.keys(data).forEach(k => {
+      map[s][k] = data[k];
+    });
+    socket.broadcast.emit("update map", [data, s]);
+  });
+
+  socket.on("delete map", s => {
+    if (!s) return;
+    map.splice(s, 1);
+    socket.broadcast.emit("delete map", s);
   });
 
   socket.on("update entity", data => {
