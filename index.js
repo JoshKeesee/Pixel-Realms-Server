@@ -129,7 +129,8 @@ setInterval(() => mapRef.set(map), 60000);
 io.on("connection", socket => {
   players.set(socket.id, defaultPlayer(socket.id));
 
-  socket.emit("update map", map);
+  socket.emit("update daylight", daylight);
+  socket.emit("init map", map);
   socket.emit("init players", Object.fromEntries(players));
   socket.broadcast.emit("update player", players.get(socket.id));
 
@@ -158,8 +159,15 @@ io.on("connection", socket => {
   });
 
   socket.on("update map", d => {
+    if (!d) return;
     map[d[1]] = d[0];
-    socket.broadcast.emit("update map", d);
+    socket.broadcast.emit("update map", [map[d[1]], d[1]]);
+  });
+
+  socket.on("update break", d => {
+    if (!d) return;
+    map[d[1]].break[d[2]] = d[0];
+    socket.broadcast.emit("update break", d);
   });
 
   socket.on("delete map", s => {
