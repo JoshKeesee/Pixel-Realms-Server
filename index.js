@@ -122,6 +122,7 @@ mapRef.on("value", snapshot => {
     if (!m.teleport) m.teleport = {};
     if (!m.entities) m.entities = [];
   });
+  io.emit("init map", map);
   mapRef.off();
 });
 setInterval(() => mapRef.set(map), 60000);
@@ -130,7 +131,7 @@ io.on("connection", socket => {
   players.set(socket.id, defaultPlayer(socket.id));
 
   socket.emit("update daylight", daylight);
-  socket.emit("init map", map);
+  map.forEach((m, i) => socket.emit("update map", [m, i]));
   socket.emit("init players", Object.fromEntries(players));
   socket.broadcast.emit("update player", players.get(socket.id));
 
@@ -151,27 +152,31 @@ io.on("connection", socket => {
 
   socket.on("google logout", () => {
     if (!socket.user) return;
-    if (socket.user) playerRef.child(socket.user.sub).set(players.get(socket.id));
+    playerRef.child(socket.user.sub).set(players.get(socket.id));
     delete socket.user;
     players.set(socket.id, defaultPlayer(socket.id));
     socket.emit("user", defaultPlayer(socket.id));
     socket.broadcast.emit("update player", players.get(socket.id));
   });
 
+  socket.on("give item", ([id, item, to, index]) => socket.to(id).emit("give item", [item, to, index]));
+  socket.on("clear inventory", id => socket.to(id).emit("clear inventory"));
+  socket.on("clear backpack", id => socket.to(id).emit("clear backpack"));
+
   socket.on("update map", d => {
-    if (!d) return;
+    if (d < 0) return;
     map[d[1]] = d[0];
     socket.broadcast.emit("update map", [map[d[1]], d[1]]);
   });
 
   socket.on("update break", d => {
-    if (!d) return;
+    if (d < 0) return;
     map[d[1]].break[d[2]] = d[0];
     socket.broadcast.emit("update break", d);
   });
 
   socket.on("delete map", s => {
-    if (!s) return;
+    if (s < 0) return;
     map.splice(s, 1);
     socket.broadcast.emit("delete map", s);
   });
