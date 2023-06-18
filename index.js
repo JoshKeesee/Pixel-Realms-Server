@@ -18,6 +18,8 @@ const { getDatabase } = require("firebase-admin/database");
 const db = getDatabase();
 const mapRef = db.ref("map");
 const playerRef = db.ref("players");
+const backupDB = require("@jkeesee/json-db");
+backupDB.disableCache();
 
 const players = new Map();
 let map = [
@@ -40,6 +42,7 @@ let map = [
 let daylight = 0;
 
 function resetMap() {
+  if (backupDB.get("map")) map = backupDB.get("map");
   map[0].break = {};
   map[0].structure = {};
   map[0].text = {};
@@ -122,10 +125,13 @@ mapRef.on("value", snapshot => {
     if (!m.teleport) m.teleport = {};
     if (!m.entities) m.entities = [];
   });
-  io.emit("init map", map);
+  map.forEach((m, i) => io.emit("update map", [m, i]));
   mapRef.off();
 });
-setInterval(() => mapRef.set(map), 60000);
+setInterval(() => {
+  mapRef.set(map);
+  backupDB.set(map);
+}, 60000);
 
 io.on("connection", socket => {
   players.set(socket.id, defaultPlayer(socket.id));
