@@ -41,35 +41,36 @@ let map = [
 ];
 let daylight = 0;
 
-function resetMap() {
-  if (backupDB.get("map")) map = backupDB.get("map");
-  map[0].break = {};
-  map[0].structure = {};
-  map[0].text = {};
-  map[0].chest = {};
-  map[0].teleport = {};
-  map[0].entities = [];
-  for (let i = 0; i < map[0].cols * map[0].rows; i++) {
-    map[0].layers.ground[i] = 0;
-    map[0].layers.scenery[i] = -1;
+function resetMap(x = 0) {
+  if (backupDB.get("map") && x == 0) map = backupDB.get("map");
+  else map[x] = { type: "woods", cols: 30, rows: 30, layers: { ground: [], scenery: [] } };
+  map[x].break = {};
+  map[x].structure = {};
+  map[x].text = {};
+  map[x].chest = {};
+  map[x].teleport = {};
+  map[x].entities = [];
+  for (let i = 0; i < map[x].cols * map[x].rows; i++) {
+    map[x].layers.ground[i] = 0;
+    map[x].layers.scenery[i] = -1;
   }
 
-  for (let i = 0; i < map[0].cols; i++) {
-    map[0].layers.scenery[i] = 53;
-    map[0].layers.scenery[map[0].layers.scenery.length - 1 - i] = 53;
+  for (let i = 0; i < map[x].cols; i++) {
+    map[x].layers.scenery[i] = 53;
+    map[x].layers.scenery[map[x].layers.scenery.length - 1 - i] = 53;
   }
 
-  for (let i = 1; i < map[0].rows; i++) {
-    map[0].layers.scenery[i * map[0].cols] = 53;
-    map[0].layers.scenery[(i * map[0].cols) - 1] = 53;
+  for (let i = 1; i < map[x].rows; i++) {
+    map[x].layers.scenery[i * map[x].cols] = 53;
+    map[x].layers.scenery[(i * map[x].cols) - 1] = 53;
   }
 }
 
 function defaultPlayer(id) {
   return {
-    x: 80,
+    x: 160,
     y: 80,
-    dx: 80,
+    dx: 160,
     dy: 80,
     frame: 0,
     dir: 0,
@@ -92,7 +93,7 @@ function defaultPlayer(id) {
       -1, -1, -1, -1, -1, -1, -1, -1,
     ],
     holding: 0,
-    scene: 0,
+    scene: 7,
     id,
     chest: false,
     bed: false,
@@ -117,20 +118,21 @@ function defaultPlayer(id) {
 mapRef.on("value", snapshot => {
   if (snapshot.val() != null) map = snapshot.val();
   else resetMap();
-  map.forEach(m => {
+  map = Object.values(map);
+  map.forEach((m, i) => {
     if (!m.break) m.break = {};
     if (!m.structure) m.structure = {};
     if (!m.text) m.text = {};
     if (!m.chest) m.chest = {};
     if (!m.teleport) m.teleport = {};
     if (!m.entities) m.entities = [];
+    io.emit("update map", [m, i])
   });
-  map.forEach((m, i) => io.emit("update map", [m, i]));
   mapRef.off();
 });
 setInterval(() => {
-  mapRef.set(map);
-  backupDB.set(map);
+  map.forEach((m, i) => mapRef.child(i).set(m));
+  backupDB.set("map", map);
 }, 60000);
 
 io.on("connection", socket => {
@@ -170,14 +172,15 @@ io.on("connection", socket => {
   socket.on("clear backpack", id => socket.to(id).emit("clear backpack"));
 
   socket.on("update map", d => {
-    if (d < 0) return;
+    if (!d) return;
     map[d[1]] = d[0];
     socket.broadcast.emit("update map", [map[d[1]], d[1]]);
   });
 
   socket.on("update break", d => {
-    if (d < 0) return;
-    map[d[1]].break[d[2]] = d[0];
+    if (!d) return;
+    if (d[0] < 0) delete map[d[1]].break[d[2]];
+    else map[d[1]].break[d[2]] = d[0];
     socket.broadcast.emit("update break", d);
   });
 
