@@ -146,21 +146,21 @@ io.on("connection", socket => {
   socket.on("google user", data => {
     if (!data) return;
     socket.user = data;
-    playerRef.child(socket.user.sub).on("value", snapshot => {
+    playerRef.child(socket.user.id).on("value", snapshot => {
       const p = snapshot.val() || players.get(socket.id);
       p.name = socket.user.name;
-      p.profile = socket.user.picture;
+      p.profile = socket.user.profile;
       p.id = socket.id;
       players.set(socket.id, p);
       socket.emit("user", p);
       socket.broadcast.emit("update player", players.get(socket.id));
-      playerRef.child(socket.user.sub).off();
+      playerRef.child(socket.user.id).off();
     });
   });
 
   socket.on("google logout", () => {
     if (!socket.user) return;
-    playerRef.child(socket.user.sub).set(players.get(socket.id));
+    playerRef.child(socket.user.id).set(players.get(socket.id));
     delete socket.user;
     players.set(socket.id, defaultPlayer(socket.id));
     socket.emit("user", defaultPlayer(socket.id));
@@ -209,7 +209,7 @@ io.on("connection", socket => {
   });
 
   socket.on("disconnect", () => {
-    if (socket.user) playerRef.child(socket.user.sub).set(players.get(socket.id));
+    if (socket.user) playerRef.child(socket.user.id).set(players.get(socket.id));
     players.delete(socket.id);
     io.emit("remove player", socket.id);
   });
