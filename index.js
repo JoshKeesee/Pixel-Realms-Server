@@ -97,6 +97,7 @@ function defaultPlayer(id) {
     minecart: false,
     health: 100,
     hunger: 120,
+		cooldown: 0,
     respawnX: 160,
     respawnY: 80,
     respawnScene: 7,
