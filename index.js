@@ -18,8 +18,6 @@ const { getDatabase } = require("firebase-admin/database");
 const db = getDatabase();
 const mapRef = db.ref("map");
 const playerRef = db.ref("players");
-const backupDB = require("@jkeesee/json-db");
-backupDB.disableCache();
 
 const players = new Map();
 let map = [
@@ -42,8 +40,7 @@ let map = [
 let daylight = 0;
 
 function resetMap(x = 0) {
-  if (backupDB.get("map") && x == 0) map = backupDB.get("map");
-  else map[x] = { type: "woods", cols: 30, rows: 30, layers: { ground: [], scenery: [] } };
+  map[x] = { type: "woods", cols: 30, rows: 30, layers: { ground: [], scenery: [] } };
   map[x].break = {};
   map[x].structure = {};
   map[x].text = {};
@@ -100,9 +97,9 @@ function defaultPlayer(id) {
     minecart: false,
     health: 100,
     hunger: 120,
-    respawnX: 80,
+    respawnX: 160,
     respawnY: 80,
-    respawnScene: 0,
+    respawnScene: 7,
     mouse: {
       x: 0,
       y: 0,
@@ -130,10 +127,7 @@ mapRef.on("value", snapshot => {
   });
   mapRef.off();
 });
-setInterval(() => {
-  map.forEach((m, i) => mapRef.child(i).set(m));
-  backupDB.set("map", map);
-}, 60000);
+setInterval(() => map.forEach((m, i) => mapRef.child(i).set(m)), 60000);
 
 io.on("connection", socket => {
   players.set(socket.id, defaultPlayer(socket.id));
@@ -167,14 +161,19 @@ io.on("connection", socket => {
     socket.broadcast.emit("update player", players.get(socket.id));
   });
 
-  socket.on("give item", ([id, item, to, index]) => socket.to(id).emit("give item", [item, to, index]));
+  socket.on("give item", ([id, item, amount]) => socket.to(id).emit("give item", [item, amount]));
+  socket.on("tp", ([id, x, y, scene]) => socket.to(id).emit("tp", [x, y, scene]));
   socket.on("clear inventory", id => socket.to(id).emit("clear inventory"));
   socket.on("clear backpack", id => socket.to(id).emit("clear backpack"));
+  socket.on("update daylight", time => {
+    daylight = time;
+    socket.broadcast.emit("update daylight", daylight);
+  });
 
   socket.on("update map", d => {
     if (!d) return;
     map[d[1]] = d[0];
-    socket.broadcast.emit("update map", [map[d[1]], d[1]]);
+    socket.broadcast.emit("update map", d);
   });
 
   socket.on("update break", d => {
@@ -223,11 +222,11 @@ io.on("connection", socket => {
   });
 });
 
-const daylightLoop = () => {
-  setTimeout(daylightLoop, 5000);
+const gameLoop = () => {
+  setTimeout(gameLoop, 8 * 60000 / 24);
   let sleeping = 0;
   players.forEach(p => (p.id != "offline" && p.bed) ? sleeping++ : "");
-  daylight += 24 / (8 * 60 / 5);
+  daylight++;
   if (daylight >= 24 || (sleeping == players.size && sleeping > 0)) daylight = 0;
   map.forEach(m => {
     if (m.entities.length == 0) return;
@@ -249,6 +248,6 @@ const daylightLoop = () => {
   io.emit("update daylight", daylight);
 }
 
-daylightLoop();
+gameLoop();
 
 server.listen(port, () => console.log(`Server listening on port ${port}`));
