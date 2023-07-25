@@ -4,8 +4,7 @@ const server = require("http").createServer(app);
 const port = process.env.PORT || 3000;
 const io = require("socket.io")(server, { cors: { origin: "*" } });
 const randomName = require("@jkeesee/random-name");
-const Filter = require("bad-words");
-const filter = new Filter();
+const badWords = require("badwords-list").array;
 const admin = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
 
@@ -37,7 +36,7 @@ let map = [
 		entities: [],
 	}
 ];
-let daylight = 0;
+let daylight = 24;
 
 function resetMap(x = 0) {
 	map[x] = { type: "woods", cols: 30, rows: 30, layers: { ground: [], scenery: [] } };
@@ -214,17 +213,17 @@ io.on("connection", socket => {
 		io.emit("remove player", socket.id);
 	});
 
-	socket.on("chat message", message => {
-		if (!message) return;
+	socket.on("chat message", m => {
+		if (!m) return;
 		io.emit("chat message", {
-			message: filter.clean(message),
+			message: m.replace(new RegExp("\\b" + badWords.join("|") + "\\b", "gi"), "****"),
 			name: players.get(socket.id).name,
 		});
 	});
 });
 
 const gameLoop = () => {
-	setTimeout(gameLoop, 8 * 60000 / 24);
+	setTimeout(gameLoop, 24 * 60000 / 24);
 	let sleeping = 0;
 	players.forEach(p => (p.id != "offline" && p.bed) ? sleeping++ : "");
 	daylight++;
