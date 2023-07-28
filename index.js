@@ -7,6 +7,15 @@ const randomName = require("@jkeesee/random-name");
 const badWords = require("badwords-list").array;
 const admin = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
+const { Client, GatewayIntentBits } = require("discord.js");
+const client = new Client({
+	intents: [
+		GatewayIntentBits.Guilds,
+		GatewayIntentBits.GuildMembers,
+		GatewayIntentBits.GuildMessages,
+		GatewayIntentBits.MessageContent,
+	],
+});
 
 admin.initializeApp({
 	credential: admin.credential.cert(serviceAccount),
@@ -221,6 +230,20 @@ io.on("connection", socket => {
 		});
 	});
 });
+
+client.on("ready", c => console.log(`Logged in as ${c.user.tag}!`));
+
+// client.on("messageCreate", c => console.log(c.content));
+
+client.on("messageCreate", c => {
+	const role = c.member.guild.roles.cache.find(role => role.name == "Member"), member = c.guild.members.cache.get(c.author.id);
+	if (!role || member.roles.cache.some(r => r == role) || c.author.bot) return;
+	member.roles.add(role);
+	c.channel.send(`${role.name} role given to @${c.author.username}`);
+	console.log(`${role.name} role given to @${c.author.username}`);
+});
+
+client.login(process.env.DISCORD_ACCESS_TOKEN);
 
 const gameLoop = () => {
 	setTimeout(gameLoop, 24 * 60000 / 24);
