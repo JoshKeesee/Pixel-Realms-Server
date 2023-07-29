@@ -7,7 +7,9 @@ const randomName = require("@jkeesee/random-name");
 const badWords = require("badwords-list").array;
 const admin = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
-const { Client, GatewayIntentBits } = require("discord.js");
+const fs = require("node:fs");
+const path = require("node:path");
+const { Collection, Client, GatewayIntentBits, SlashCommandBuilder } = require("discord.js");
 const client = new Client({
 	intents: [
 		GatewayIntentBits.Guilds,
@@ -231,19 +233,78 @@ io.on("connection", socket => {
 	});
 });
 
-client.on("ready", c => console.log(`Logged in as ${c.user.tag}!`));
+client.invites = {};
+client.commands = new Collection();
 
-// client.on("messageCreate", c => console.log(c.content));
+const commandsPath = path.join(__dirname, "commands");
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith(".js"));
 
-client.on("messageCreate", c => {
-	const role = c.member.guild.roles.cache.find(role => role.name == "Member"), member = c.guild.members.cache.get(c.author.id);
-	if (!role || member.roles.cache.some(r => r == role) || c.author.bot) return;
-	member.roles.add(role);
-	c.channel.send(`${role.name} role given to @${c.author.username}`);
-	console.log(`${role.name} role given to @${c.author.username}`);
+for (const file of commandFiles) {
+	const filePath = path.join(commandsPath, file);
+	const command = require(filePath);
+	
+	if ("data" in command && "execute" in command) {
+		client.commands.set(command.data.name, command);
+	} else {
+		console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+	}
+}
+
+client.on("ready", c => {
+	console.log(`Logged in as ${c.user.tag}`);
+	client.guilds.cache.each(guild => {
+		guild.invites.fetch().then(guildInvites => {
+			guildInvites.each(guildInvite => {
+				client.invites[guildInvite.code] = guildInvite.uses;
+			});
+		});
+	});
+});
+
+client.on("interactionCreate", async c => {
+	if (!c.isChatInputCommand()) return;
+	const command = c.client.commands.get(c.commandName);
+
+	if (!command) return console.error(`No command matching ${c.commandName} was found.`);
+
+	try {
+		await command.execute(c, io, players);
+	} catch (error) {
+		console.error(error);
+		if (c.replied || c.deferred) {
+			await c.followUp({ content: "There was an error while executing this command!", ephemeral: true });
+		} else {
+			await c.reply({ content: "There was an error while executing this command!", ephemeral: true });
+		}
+	}
+});
+
+client.on("inviteCreate", c => client.invites[c.code] = c.uses);
+
+client.on("guildMemberAdd", async c => {
+	const channel = c.guild.channels.cache.get("1110320214727475251");
+	c.guild.invites.fetch().then(invites => {
+		invites.each(invite => {
+			if (invite.uses != client.invites[invite.code]) {
+				channel.send(`Welcome to the server, <@${c.user.id}>!`);
+				client.invites[invite.code] = invite.uses;
+				if (invite.code == "VCkGgSvCrr") addRole("Player", c);
+				else addRole("Member", c);
+			}
+		});
+	});
 });
 
 client.login(process.env.DISCORD_ACCESS_TOKEN);
+
+const addRole = (name, c) => {
+	const user = c.author || c.user, channel = c.channel || c.guild.channels.cache.get("1110320214727475251");
+	const role = c.guild.roles.cache.find(role => role.name == name), member = c.guild.members.cache.get(user.id);
+	if (!role || member.roles.cache.some(r => r == role) || user.bot || user.system) return;
+	member.roles.add(role);
+	channel.send(`${role.name} role given to <@${user.id}>`);
+	console.log(`${role.name} role given to <@${user.id}>`);
+};
 
 const gameLoop = () => {
 	setTimeout(gameLoop, 24 * 60000 / 24);
