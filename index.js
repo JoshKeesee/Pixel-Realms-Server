@@ -9,7 +9,7 @@ const admin = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
 const fs = require("node:fs");
 const path = require("node:path");
-const { Collection, Client, GatewayIntentBits, SlashCommandBuilder } = require("discord.js");
+const { Collection, Client, GatewayIntentBits } = require("discord.js");
 const client = new Client({
 	intents: [
 		GatewayIntentBits.Guilds,
@@ -268,6 +268,7 @@ client.on("interactionCreate", async c => {
 	if (!command) return console.error(`No command matching ${c.commandName} was found.`);
 
 	try {
+		if (c.commandName == "setTime") daylight = c.options.getNumber("time");
 		await command.execute(c, io, players);
 	} catch (error) {
 		console.error(error);
