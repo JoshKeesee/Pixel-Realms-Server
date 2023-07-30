@@ -262,20 +262,28 @@ client.on("ready", c => {
 });
 
 client.on("interactionCreate", async c => {
-	if (!c.isChatInputCommand()) return;
-	const command = c.client.commands.get(c.commandName);
+	if (c.isChatInputCommand()) {
+		const command = c.client.commands.get(c.commandName);
+	
+		if (!command) return console.error(`No command matching ${c.commandName} was found.`);
+	
+		try {
+			if (c.commandName == "setTime") daylight = c.options.getNumber("time");
+			await command.execute(c, io, players);
+		} catch (error) {
+			console.error(error);
+			if (c.replied || c.deferred) await c.followUp({ content: "There was an error while executing this command!", ephemeral: true });
+			else await c.reply({ content: "There was an error while executing this command!", ephemeral: true });
+		}
+	} else if (c.isAutocomplete()) {
+		const command = c.client.commands.get(c.commandName);
 
-	if (!command) return console.error(`No command matching ${c.commandName} was found.`);
+		if (!command) return console.error(`No command matching ${c.commandName} was found.`);
 
-	try {
-		if (c.commandName == "setTime") daylight = c.options.getNumber("time");
-		await command.execute(c, io, players);
-	} catch (error) {
-		console.error(error);
-		if (c.replied || c.deferred) {
-			await c.followUp({ content: "There was an error while executing this command!", ephemeral: true });
-		} else {
-			await c.reply({ content: "There was an error while executing this command!", ephemeral: true });
+		try {
+			await command.autocomplete(c, players);
+		} catch (error) {
+			console.error(error);
 		}
 	}
 });
