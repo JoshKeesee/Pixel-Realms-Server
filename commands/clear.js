@@ -26,6 +26,6 @@ module.exports = {
 		const p = [...players.values()].find(p => p.name.replace(" ", "_") == c.options.getString("user")), type = c.options.getString("type");
 		if (!p || (type != "i" && type != "b")) return await c.reply("An error occured");
 		io.to(p.id).emit(type == "i" ? "clear inventory" : "clear backpack");
-		await c.reply(`Cleared ${p.name}'s ${type == "i" ? "inventory" : "backpack"}!`);
+		await c.reply({ content: `Cleared ${p.name}'s ${type == "i" ? "inventory" : "backpack"}!`, ephemeral: true });
 	},
 };

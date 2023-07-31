@@ -34,6 +34,6 @@ module.exports = {
 		const p = [...players.values()].find(p => p.name == c.options.getString("user")), x = c.options.getNumber("x"), y = c.options.getNumber("y"), scene = c.options.getNumber("scene") || p?.scene;
 		if (!p || !x || !y || !scene) return await c.reply("An error occured");
 		io.to(p.id).emit("tp", [x, y, scene]);
-		await c.reply(`Teleported ${p.name} to (${x}, ${y}) in scene ${scene}!`);
+		await c.reply({ content: `Teleported ${p.name} to (${x}, ${y}) in scene ${scene}!`, ephemeral: true });
 	},
 };

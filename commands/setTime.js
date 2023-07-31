@@ -10,6 +10,6 @@ module.exports = {
 	),
 	async execute(c, io, players) {
 		io.emit("update daylight", c.options.getNumber("time"));
-		await c.reply(`Set time to ${c.options.getNumber("time")}!`);
+		await c.reply({ content: `Set time to ${c.options.getNumber("time")}!`, ephemeral: true });
 	},
 };

@@ -30,6 +30,6 @@ module.exports = {
 		const p = [...players.values()].find(p => p.name == c.options.getString("user")), item = c.options.getString("item"), amount = c.options.getNumber("amount") || 1;
 		if (!p || !item || !amount) return await c.reply("An error occured");
 		io.to(p.id).emit("give item", [item, amount]);
-		await c.reply(`Gave ${p.name} ${amount} ${item.replaceAll("_", " ")}!`);
+		await c.reply({ content: `Gave ${p.name} ${amount} ${item.replaceAll("_", " ")}!`, ephemeral: true });
 	},
 };
