@@ -3,15 +3,18 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-		"start": "nodemon",
     "deploy": "node ./assets/deploy-commands.js"
   },
   "keywords": [],
   "author": "Pixelwood",
   "license": "ISC",
   "dependencies": {
+    "@jkeesee/json-db": "^3.0.5",
+    "@jkeesee/login": "^1.0.0",
     "@jkeesee/random-name": "^1.0.0",
     "badwords-list": "^1.0.0",
+    "bcrypt": "^5.1.0",
+    "cors": "^2.8.5",
     "discord.js": "^14.11.0",
     "express": "^4.18.2",
     "firebase-admin": "^11.9.0",

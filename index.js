@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const cors = require("cors");
 const server = require("http").createServer(app);
 const port = process.env.PORT || 3000;
 
@@ -18,7 +19,15 @@ const db = getDatabase();
 const mapRef = db.ref("map");
 const playerRef = db.ref("players");
 const defaultPlayer = require("./assets/defaultPlayer");
+const User = require("@jkeesee/login");
 
+app.use(express.urlencoded({
+	extended: true,
+}));
+app.use(express.json());
+app.use(cors());
+
+const user = new User(app);
 const players = new Map();
 let map = [
 	{
@@ -66,7 +75,7 @@ io.on("connection", socket => {
 	socket.emit("init players", Object.fromEntries(players));
 	socket.broadcast.emit("update player", players.get(socket.id));
 
-	socket.on("google user", data => {
+	socket.on("login", data => {
 		if (!data) return;
 		socket.user = data;
 		playerRef.child(socket.user.id).on("value", snapshot => {
@@ -81,7 +90,7 @@ io.on("connection", socket => {
 		});
 	});
 
-	socket.on("google logout", () => {
+	socket.on("logout", () => {
 		if (!socket.user) return;
 		playerRef.child(socket.user.id).set(players.get(socket.id));
 		delete socket.user;
