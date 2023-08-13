@@ -12,22 +12,24 @@ const { getDatabase } = require("firebase-admin/database");
 
 admin.initializeApp({
 	credential: admin.credential.cert(serviceAccount),
-	databaseURL: "https://pixelwood-default-rtdb.firebaseio.com"
+	databaseURL: "https://pixelwood-default-rtdb.firebaseio.com",
 });
 
 const db = getDatabase();
 const mapRef = db.ref("map");
 const playerRef = db.ref("players");
 const defaultPlayer = require("./assets/defaultPlayer");
-const User = require("@jkeesee/login");
+const Login = require("@jkeesee/login");
+const jsonDb = require("@jkeesee/json-db");
 
 app.use(express.urlencoded({
 	extended: true,
 }));
 app.use(express.json());
 app.use(cors());
+app.use("/profiles", express.static(__dirname + "/profiles"));
 
-const user = new User(app);
+new Login(app);
 const players = new Map();
 let map = [
 	{
@@ -61,13 +63,15 @@ mapRef.on("value", snapshot => {
 		if (!m.chest) m.chest = {};
 		if (!m.teleport) m.teleport = {};
 		if (!m.entities) m.entities = [];
-		io.emit("update map", [m, i])
+		io.emit("update map", [m, i]);
 	});
 	mapRef.off();
 });
 setInterval(() => map.forEach((m, i) => mapRef.child(i).set(m)), 60000);
 
 io.on("connection", socket => {
+	const banned = jsonDb.get("banned") || [];
+	if (banned.includes(socket.handshake.address)) socket.emit("ban");
 	players.set(socket.id, defaultPlayer(socket.id));
 
 	socket.emit("update daylight", daylight);
@@ -103,6 +107,14 @@ io.on("connection", socket => {
 	socket.on("tp", ([id, x, y, scene]) => socket.to(id).emit("tp", [x, y, scene]));
 	socket.on("clear inventory", id => socket.to(id).emit("clear inventory"));
 	socket.on("clear backpack", id => socket.to(id).emit("clear backpack"));
+	socket.on("kick", id => socket.to(id).emit("kick"));
+	socket.on("ban", id => {
+		const ip = io.sockets.sockets.get(id).handshake.address;
+		const banned = jsonDb.get("banned") || [];
+		banned.push(ip);
+		jsonDb.set({ banned });
+		socket.to(id).emit("ban");
+	});
 	socket.on("update daylight", time => {
 		daylight = time;
 		socket.broadcast.emit("update daylight", daylight);
