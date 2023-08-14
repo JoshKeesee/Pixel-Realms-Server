@@ -113,7 +113,7 @@ io.on("connection", socket => {
 		const banned = jsonDb.get("banned") || [];
 		banned.push(ip);
 		jsonDb.set({ banned });
-		socket.to(id).emit("ban");
+		socket.to(id).emit("kick");
 	});
 	socket.on("update daylight", time => {
 		daylight = time;
