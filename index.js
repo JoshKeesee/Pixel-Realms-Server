@@ -71,7 +71,7 @@ setInterval(() => map.forEach((m, i) => mapRef.child(i).set(m)), 60000);
 
 io.on("connection", socket => {
 	const banned = jsonDb.get("banned") || [];
-	if (banned.includes(socket.handshake.address)) socket.emit("ban");
+	if (banned.includes(socket.handshake.address)) return socket.emit("ban");
 	players.set(socket.id, defaultPlayer(socket.id));
 
 	socket.emit("update daylight", daylight);
