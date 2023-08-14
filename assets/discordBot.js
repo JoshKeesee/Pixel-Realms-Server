@@ -1,4 +1,4 @@
-module.exports = (io, players) => {
+module.exports = (io, players, db) => {
 	const fs = require("node:fs");
 	const path = require("node:path");
 	const discord = require("discord.js");
@@ -46,7 +46,7 @@ module.exports = (io, players) => {
 		
 			try {
 				if (c.commandName == "setTime") daylight = c.options.getNumber("time");
-				await command.execute(c, io, players);
+				await command.execute(c, io, players, db);
 			} catch (error) {
 				console.error(error);
 				if (c.replied || c.deferred) await c.followUp({ content: "There was an error while executing this command!", ephemeral: true });
@@ -58,7 +58,7 @@ module.exports = (io, players) => {
 			if (!command) return console.error(`No command matching ${c.commandName} was found.`);
 	
 			try {
-				await command.autocomplete(c, players);
+				await command.autocomplete(c, players, db);
 			} catch (error) {
 				console.error(error);
 			}

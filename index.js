@@ -50,7 +50,7 @@ let map = [
 ];
 let daylight = 24;
 
-require("./assets/discordBot")(io, players);
+require("./assets/discordBot")(io, players, jsonDb);
 
 mapRef.on("value", snapshot => {
 	if (snapshot.val() != null) map = snapshot.val();
