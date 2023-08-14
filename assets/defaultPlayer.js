@@ -47,5 +47,6 @@ module.exports = (id) => {
 		},
 		cx: 0,
 		cy: 0,
+		ping: 0,
 	}
 }

@@ -170,6 +170,8 @@ io.on("connection", socket => {
 			name: players.get(socket.id).name,
 		});
 	});
+
+	socket.on("ping", callback => callback());
 });
 
 const resetMap = (x = 0) => {
