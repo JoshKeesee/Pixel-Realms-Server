@@ -1,4 +1,6 @@
-module.exports = (io, players, db) => {
+module.exports = (io, db) => {
+	const rooms = db.get("rooms");
+	const players = new Map();
 	const fs = require("node:fs");
 	const path = require("node:path");
 	const discord = require("discord.js");
