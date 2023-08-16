@@ -164,6 +164,7 @@ io.on("connection", socket => {
 		rooms[roomId] = {
 			name,
 			public,
+			id: roomId,
 			creator: user.name,
 			map: newMap(),
 			players: { [socket.id]: p },
@@ -180,7 +181,14 @@ io.on("connection", socket => {
 		socket.emit("user", p);
 	});
 
-	socket.on("get rooms", cb => cb(Object.values(rooms).map(r => r.name)));
+	socket.on("get rooms", cb => {
+		const r = {};
+		Object.keys(rooms).forEach(k => {
+			const { name, id, public, creator } = rooms[k];
+			r[k] = { name, id, public, creator };
+		});
+		cb(r);
+	});
 });
 
 const gameLoop = () => {
@@ -190,7 +198,7 @@ const gameLoop = () => {
 		const r = rooms[k];
 		Object.values(r.players).forEach(p => (p.id != "offline" && p.bed) ? sleeping++ : "");
 		r.daylight++;
-		if (r.daylight >= 24 || (sleeping >= Math.ceil(Object.keys(r.players).length / 2) && sleeping > 0)) daylight = 0;
+		if (r.daylight >= 24 || (sleeping >= Math.ceil(Object.keys(r.players).length / 2) && sleeping > 0)) r.daylight = 0;
 		r.map.forEach(m => {
 			if (m.entities.length == 0) return;
 			m.entities.forEach(e => {
