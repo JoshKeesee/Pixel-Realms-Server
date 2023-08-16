@@ -1,5 +1,4 @@
-module.exports = (io, db) => {
-	const rooms = db.get("rooms");
+module.exports = (io, rooms, db) => {
 	const players = new Map();
 	const fs = require("node:fs");
 	const path = require("node:path");

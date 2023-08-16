@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(cors());
 app.use("/profiles", express.static(__dirname + "/profiles"));
 new Login(app);
-require("./assets/discordBot")(io, db);
+require("./assets/discordBot")(io, rooms, db);
 
 io.on("connection", socket => {
 	const banned = db.get("banned") || [];
@@ -32,7 +32,8 @@ io.on("connection", socket => {
 	socket.on("login", data => {
 		if (!data) return;
 		user = { ...data, room: user.room };
-		const p = defaultPlayer(socket.id);
+		if (!user.room) return;
+		const p = rooms[user.room].save[user.id] || defaultPlayer(socket.id);
 		p.name = data.name;
 		p.profile = data.profile;
 		p.id = socket.id;
@@ -44,6 +45,7 @@ io.on("connection", socket => {
 
 	socket.on("logout", () => {
 		if (typeof user.id != "number" || !user.room) return;
+		rooms[user.room].save[user.id] = rooms[user.room].players[socket.id];
 		rooms[user.room].players[socket.id] = defaultPlayer(socket.id);
 		socket.broadcast.to(user.room).emit("update player", rooms[user.room].players[socket.id]);
 		socket.emit("user", rooms[user.room].players[socket.id]);
@@ -138,14 +140,15 @@ io.on("connection", socket => {
 		rooms[user.room].players[socket.id] = p;
 		socket.join(user.room);
 
+		socket.broadcast.to(user.room).emit("update player", p);
 		socket.emit("update daylight", rooms[user.room].daylight);
 		socket.emit("init map", rooms[user.room].map);
 		socket.emit("init players", rooms[user.room].players);
-		socket.broadcast.to(user.room).emit("update player", p);
 	});
 
 	socket.on("leave room", () => {
 		if (!user.room) return;
+		if (typeof user.id == "number") rooms[user.room].save[user.id] = rooms[user.room].players[socket.id];
 		delete rooms[user.room].players[socket.id];
 		socket.leave(user.room);
 		user.room = null;
@@ -164,11 +167,16 @@ io.on("connection", socket => {
 			creator: user.name,
 			map: newMap(),
 			players: { [socket.id]: p },
+			save: {},
 			daylight: 0,
 		};
 		if (user.room) socket.leave(user.room);
 		user.room = roomId;
 		socket.join(user.room);
+		socket.broadcast.to(user.room).emit("update player", p);
+		socket.emit("update daylight", rooms[user.room].daylight);
+		socket.emit("init map", rooms[user.room].map);
+		socket.emit("init players", rooms[user.room].players);
 		socket.emit("user", p);
 	});
 

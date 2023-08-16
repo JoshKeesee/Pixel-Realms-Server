@@ -2,9 +2,9 @@ const randomName = require("@jkeesee/random-name");
 
 module.exports = (id) => {
 	return {
-		x: 160,
+		x: 80,
 		y: 80,
-		dx: 160,
+		dx: 80,
 		dy: 80,
 		frame: 0,
 		dir: 0,
@@ -27,7 +27,7 @@ module.exports = (id) => {
 			-1, -1, -1, -1, -1, -1, -1, -1,
 		],
 		holding: 0,
-		scene: 7,
+		scene: 0,
 		id,
 		chest: false,
 		bed: false,
