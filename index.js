@@ -77,7 +77,7 @@ io.on("connection", socket => {
 		io.to(user.room).emit("update admins", rooms[user.room].admins);
 	});
 	socket.on("unop", id => {
-		if (!user.room || typeof user.id != "number") return;
+		if (!user.room || typeof user.id != "number" || id == socket.id) return;
 		if (!rooms[user.room].admins[user.id] && !devs[user.id]) return;
 		const p = rooms[user.room].players[id];
 		if (!p?.user) return;
@@ -106,7 +106,7 @@ io.on("connection", socket => {
 
 	socket.on("delete map", s => {
 		if (s < 0 || !user.room) return;
-		map.splice(s, 1);
+		rooms[user.room].map.splice(s, 1);
 		socket.broadcast.to(user.room).emit("delete map", s);
 	});
 
@@ -136,8 +136,8 @@ io.on("connection", socket => {
 		if (typeof user.id == "number") rooms[user.room].save[user.id] = rooms[user.room].players[socket.id];
 		delete rooms[user.room].players[socket.id];
 		socket.leave(user.room);
-		user.room = null;
 		io.to(user.room).emit("remove player", socket.id);
+		user.room = null;
 	});
 
 	socket.on("chat message", m => {
