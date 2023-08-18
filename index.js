@@ -69,7 +69,7 @@ io.on("connection", socket => {
 	});
 	socket.on("op", id => {
 		if (!user.room || typeof user.id != "number") return;
-		if (!rooms[user.room].admins[user.id] && !devs[user.id]) return;
+		if (!rooms[user.room].admins[user.id] && !devs[user.id] && user.name != rooms[user.room].creator) return;
 		const p = rooms[user.room].players[id];
 		if (!p?.user) return;
 		if (rooms[user.room].admins[p.user.id]) return;
@@ -81,7 +81,7 @@ io.on("connection", socket => {
 		if (!rooms[user.room].admins[user.id] && !devs[user.id]) return;
 		const p = rooms[user.room].players[id];
 		if (!p?.user) return;
-		if (!rooms[user.room].admins[p.user.id]) return;
+		if (!rooms[user.room].admins[p.user.id] || p.user.name == rooms[user.room].creator) return;
 		rooms[user.room].admins[p.user.id] = false;
 		io.to(user.room).emit("update admins", rooms[user.room].admins);
 	});
