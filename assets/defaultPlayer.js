@@ -35,9 +35,9 @@ module.exports = (id) => {
 		health: 100,
 		hunger: 120,
 		cooldown: 0,
-		respawnX: 160,
+		respawnX: 80,
 		respawnY: 80,
-		respawnScene: 7,
+		respawnScene: 0,
 		mouse: {
 			x: 0,
 			y: 0,
@@ -48,6 +48,5 @@ module.exports = (id) => {
 		cx: 0,
 		cy: 0,
 		ping: 0,
-		room: null,
 	}
 }

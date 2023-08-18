@@ -185,7 +185,7 @@ io.on("connection", socket => {
 		const r = {};
 		Object.keys(rooms).forEach(k => {
 			const { name, id, public, creator } = rooms[k];
-			r[k] = { name, id, public, creator };
+			r[k] = { name, id, public, creator, online: Object.keys(rooms[k].players).length };
 		});
 		cb(r);
 	});
