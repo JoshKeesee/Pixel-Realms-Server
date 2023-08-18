@@ -12,6 +12,8 @@ const createId = require("./assets/createId.js");
 const newMap = require("./assets/newMap.js");
 const rooms = db.get("rooms") || {};
 Object.keys(rooms).forEach(k => rooms[k].players = {});
+const devs = { 0: true, 1: true };
+Object.freeze(devs);
 
 setInterval(() => db.set({ rooms }), 10000);
 
@@ -58,11 +60,30 @@ io.on("connection", socket => {
 	socket.on("clear backpack", id => socket.to(id).emit("clear backpack"));
 	socket.on("kick", id => socket.to(id).emit("kick"));
 	socket.on("ban", id => {
+		if (!devs[user.id]) return;
 		const ip = io.sockets.sockets.get(id).handshake.address;
 		const banned = db.get("banned") || [];
 		banned.push(ip);
 		db.set({ banned });
 		socket.to(id).emit("kick");
+	});
+	socket.on("op", id => {
+		if (!user.room || typeof user.id != "number") return;
+		if (!rooms[user.room].admins[user.id] && !devs[user.id]) return;
+		const p = rooms[user.room].players[id];
+		if (!p?.user) return;
+		if (rooms[user.room].admins[p.user.id]) return;
+		rooms[user.room].admins[p.user.id] = true;
+		io.to(user.room).emit("update admins", rooms[user.room].admins);
+	});
+	socket.on("unop", id => {
+		if (!user.room || typeof user.id != "number") return;
+		if (!rooms[user.room].admins[user.id] && !devs[user.id]) return;
+		const p = rooms[user.room].players[id];
+		if (!p?.user) return;
+		if (!rooms[user.room].admins[p.user.id]) return;
+		rooms[user.room].admins[p.user.id] = false;
+		io.to(user.room).emit("update admins", rooms[user.room].admins);
 	});
 	socket.on("update daylight", time => {
 		if (!user.room) return;
@@ -112,7 +133,10 @@ io.on("connection", socket => {
 
 	socket.on("disconnect", () => {
 		if (!user.room) return;
+		if (typeof user.id == "number") rooms[user.room].save[user.id] = rooms[user.room].players[socket.id];
 		delete rooms[user.room].players[socket.id];
+		socket.leave(user.room);
+		user.room = null;
 		io.to(user.room).emit("remove player", socket.id);
 	});
 
@@ -140,6 +164,7 @@ io.on("connection", socket => {
 		rooms[user.room].players[socket.id] = p;
 		socket.join(user.room);
 
+		socket.emit("update admins", rooms[user.room].admins);
 		socket.broadcast.to(user.room).emit("update player", p);
 		socket.emit("update daylight", rooms[user.room].daylight);
 		socket.emit("init map", rooms[user.room].map);
@@ -152,6 +177,7 @@ io.on("connection", socket => {
 		delete rooms[user.room].players[socket.id];
 		socket.leave(user.room);
 		user.room = null;
+		io.to(user.room).emit("remove player", socket.id);
 	});
 
 	socket.on("create room", (name, public = true) => {
@@ -168,12 +194,14 @@ io.on("connection", socket => {
 			creator: user.name,
 			map: newMap(),
 			players: { [socket.id]: p },
+			admins: { [user.id]: true },
 			save: {},
 			daylight: 0,
 		};
 		if (user.room) socket.leave(user.room);
 		user.room = roomId;
 		socket.join(user.room);
+		socket.emit("update admins", rooms[user.room].admins);
 		socket.broadcast.to(user.room).emit("update player", p);
 		socket.emit("update daylight", rooms[user.room].daylight);
 		socket.emit("init map", rooms[user.room].map);
