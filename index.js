@@ -64,11 +64,12 @@ io.on("connection", socket => {
 	socket.on("tp", ([id, x, y, scene]) => socket.to(id).emit("tp", [x, y, scene]));
 	socket.on("clear inventory", id => socket.to(id).emit("clear inventory"));
 	socket.on("clear backpack", id => socket.to(id).emit("clear backpack"));
-	socket.on("kick", id => socket.to(id).emit("kick"));
+	socket.on("kick", id => (!devs[id]) ? socket.to(id).emit("kick") : "");
 	socket.on("ban", id => {
 		if (typeof user.id != "number" || !user.room || !id) return;
 		const rooms = db.get("rooms") || {};
 		if (!rooms[user.room].admins[user.id] && !devs[user.id]) return;
+		if (rooms[user.room].admins[id] || devs[id]) return;
 		const ip = io.sockets.sockets.get(id).handshake.address;
 		rooms[user.room].banned.push(ip);
 		db.set({ rooms });
@@ -144,7 +145,7 @@ io.on("connection", socket => {
 		const p = players[user.room][socket.id];
 		rooms[user.room].map[p.scene].entities.splice(data, 1);
 		db.set({ rooms });
-		socket.broadcast.to(user.room).emit("remove entity", [...data, p.scene]);
+		socket.broadcast.to(user.room).emit("remove entity", [data, p.scene]);
 	});
 
 	socket.on("update player", changes => {
@@ -289,6 +290,7 @@ const gameLoop = () => {
 	});
 	Object.keys(rooms).forEach(r => {
 		Object.values(players[r]).forEach(p => {
+			if (!p.user) return;
 			if (typeof p.user.id != "number") return;
 			rooms[r].saves[p.user.id] = p;
 		});
