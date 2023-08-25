@@ -19,7 +19,7 @@
   "homepage": "https://github.com/JoshKeesee/Pixelwood-Server#readme",
   "dependencies": {
     "@jkeesee/json-db": "^3.0.5",
-    "@jkeesee/login": "^1.0.5",
+    "@jkeesee/login": "^2.0.1",
     "@jkeesee/random-name": "^1.0.0",
     "badwords-list": "^1.0.0",
     "bcrypt": "^5.1.0",
