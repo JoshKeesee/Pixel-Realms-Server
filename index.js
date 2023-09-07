@@ -4,7 +4,7 @@ const cors = require("cors");
 const server = require("http").createServer(app);
 const port = process.env.PORT || 3000;
 const io = require("socket.io")(server, { cors: { origin: "*" } });
-const badWords = require("badwords-list").array;
+const badWords = require("badwords-list").regexp;
 const defaultPlayer = require("./assets/defaultPlayer");
 const Login = require("@jkeesee/login");
 const db = require("@jkeesee/json-db");
@@ -62,19 +62,20 @@ io.on("connection", socket => {
 		user = { room: user.room };
 	});
 
-	socket.on("give item", ([id, item, amount]) => socket.to(id).emit("give item", [item, amount]));
-	socket.on("tp", ([id, x, y, scene]) => socket.to(id).emit("tp", [x, y, scene]));
-	socket.on("clear inventory", id => socket.to(id).emit("clear inventory"));
-	socket.on("clear backpack", id => socket.to(id).emit("clear backpack"));
+	socket.on("give item", ([id, item, amount]) => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("give item", [item, amount]) : "");
+	socket.on("tp", ([id, x, y, scene]) => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("tp", [x, y, scene]) : "");
+	socket.on("clear inventory", id => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("clear inventory") : "");
+	socket.on("clear backpack", id => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("clear backpack") : "");
+	socket.on("kill", id => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("kill") : "");
 	socket.on("kick", id => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("kick") : "");
 	socket.on("ban", id => {
 		if (typeof user.id != "number" || !user.room || !id) return;
 		const rooms = db.get("rooms") || {};
 		if (!rooms[user.room].admins[user.id] && !devs[user.id]) return;
 		if (rooms[user.room].admins[id] || devs[id]) return;
-		const ip = io.sockets.sockets.get(id).handshake.address;
-		rooms[user.room].banned.push(ip);
-		db.set({ rooms });
+		const ban = players[user.room][id].user?.id;
+		if (ban) rooms[user.room].banned.push(ban);
+		if (ban) db.set({ rooms });
 		socket.to(id).emit("kick");
 	});
 	socket.on("op", id => {
@@ -100,7 +101,7 @@ io.on("connection", socket => {
 		io.to(user.room).emit("update admins", rooms[user.room].admins);
 	});
 	socket.on("update daylight", time => {
-		if (!user.room) return;
+		if (!user.room || !devs[players[user.room][id].user?.id]) return;
 		const rooms = db.get("rooms") || {};
 		rooms[user.room].daylight = time;
 		db.set({ rooms });
@@ -160,17 +161,29 @@ io.on("connection", socket => {
 		if (!m || !user.room) return;
 		const p = players[user.room][socket.id];
 		io.to(user.room).emit("chat message", {
-			message: m.replace(new RegExp("\\b" + badWords.join("|") + "\\b", "gi"), "****"),
+			message: m.replace(badWords, "****"),
 			name: p.name,
 		});
 	});
 
-	socket.on("ping", cb => cb());
+	socket.on("ping", cb => {
+		if (!user.room) return;
+		const rooms = db.get("rooms") || {};
+		cb(rooms[user.room].admins);
+	});
+
+	socket.on("check ban", (id, cb) => {
+		const rooms = db.get("rooms") || {};
+		if (!rooms[id]) return;
+		const ban = user ? user.id : "";
+		cb(rooms[id].banned.includes(ban));
+	});
 
 	socket.on("join room", id => {
 		const rooms = db.get("rooms") || {};
 		if (!rooms[id] || user.room == id) return;
-		if (rooms[id].banned.includes(socket.handshake.address)) return socket.emit("ban", id);
+		const ban = user ? user.id : "";
+		if (rooms[id].banned.includes(ban)) return;
 		if (user.room) socket.leave(user.room);
 		user.room = id;
 		p = defaultPlayer(socket.id);
