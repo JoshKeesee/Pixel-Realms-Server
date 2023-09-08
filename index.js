@@ -62,12 +62,12 @@ io.on("connection", socket => {
 		user = { room: user.room };
 	});
 
-	socket.on("give item", ([id, item, amount]) => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("give item", [item, amount]) : "");
-	socket.on("tp", ([id, x, y, scene]) => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("tp", [x, y, scene]) : "");
-	socket.on("clear inventory", id => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("clear inventory") : "");
-	socket.on("clear backpack", id => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("clear backpack") : "");
-	socket.on("kill", id => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("kill") : "");
-	socket.on("kick", id => (!devs[players[user.room][id].user?.id]) ? socket.to(id).emit("kick") : "");
+	socket.on("give item", ([id, item, amount]) => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("give item", [item, amount]) : "");
+	socket.on("tp", ([id, x, y, scene]) => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("tp", [x, y, scene]) : "");
+	socket.on("clear inventory", id => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("clear inventory") : "");
+	socket.on("clear backpack", id => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("clear backpack") : "");
+	socket.on("kill", id => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("kill") : "");
+	socket.on("kick", id => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("kick") : "");
 	socket.on("ban", id => {
 		if (typeof user.id != "number" || !user.room || !id) return;
 		const rooms = db.get("rooms") || {};
@@ -107,45 +107,38 @@ io.on("connection", socket => {
 		db.set({ rooms });
 		socket.broadcast.to(user.room).emit("update daylight", time);
 	});
-
 	socket.on("update map", d => {
 		if (!d || !user.room) return;
 		maps[user.room][d[1]] = d[0];
 		socket.broadcast.to(user.room).emit("update map", d);
 	});
-
 	socket.on("update break", d => {
 		if (!d || !user.room) return;
 		socket.broadcast.to(user.room).emit("update break", d);
 	});
-
 	socket.on("delete map", s => {
 		if (s < 0 || !user.room) return;
 		maps[user.room].splice(s, 1);
 		socket.broadcast.to(user.room).emit("delete map", s);
 	});
-
 	socket.on("update entity", data => {
 		if (!user.room || !data) return;
 		const p = players[user.room][socket.id];
 		entities[user.room][p.scene][data[1]] = data[0];
 		socket.broadcast.to(user.room).emit("update entity", [...data, p.scene]);
 	});
-
 	socket.on("remove entity", data => {
 		if (!user.room || !data) return;
 		const p = players[user.room][socket.id];
 		entities[user.room][p.scene].splice(data, 1);
 		socket.broadcast.to(user.room).emit("remove entity", [data, p.scene]);
 	});
-
 	socket.on("update player", changes => {
 		if (!changes || !user.room) return;
 		const p = players[user.room][socket.id];
 		Object.keys(changes).forEach(k => p[k] = changes[k]);
 		socket.broadcast.to(user.room).emit("update player", { ...changes, id: socket.id });
 	});
-
 	socket.on("disconnect", () => {
 		if (!user.room) return;
 		const rooms = db.get("rooms") || {};
@@ -156,7 +149,6 @@ io.on("connection", socket => {
 		io.to(user.room).emit("remove player", socket.id);
 		user.room = null;
 	});
-
 	socket.on("chat message", m => {
 		if (!m || !user.room) return;
 		const p = players[user.room][socket.id];
@@ -165,20 +157,17 @@ io.on("connection", socket => {
 			name: p.name,
 		});
 	});
-
 	socket.on("ping", cb => {
 		if (!user.room) return;
 		const rooms = db.get("rooms") || {};
 		cb(rooms[user.room].admins);
 	});
-
 	socket.on("check ban", (id, cb) => {
 		const rooms = db.get("rooms") || {};
 		if (!rooms[id]) return;
 		const ban = user ? user.id : "";
 		cb(rooms[id].banned.includes(ban));
 	});
-
 	socket.on("join room", id => {
 		const rooms = db.get("rooms") || {};
 		if (!rooms[id] || user.room == id) return;
@@ -202,7 +191,6 @@ io.on("connection", socket => {
 		socket.emit("init map", maps[user.room]);
 		socket.emit("init players", players[user.room]);
 	});
-
 	socket.on("leave room", () => {
 		if (!user.room) return;
 		const rooms = db.get("rooms") || {};
@@ -213,7 +201,6 @@ io.on("connection", socket => {
 		user.room = null;
 		io.to(user.room).emit("remove player", socket.id);
 	});
-
 	socket.on("create room", (name, public = true) => {
 		if (typeof user.id != "number") return;
 		const rooms = db.get("rooms") || {};
@@ -250,13 +237,12 @@ io.on("connection", socket => {
 		socket.emit("init players", players[user.room]);
 		socket.emit("user", p);
 	});
-
 	socket.on("get rooms", cb => {
 		const rooms = db.get("rooms") || {};
 		const r = {};
 		Object.keys(rooms).forEach(k => {
 			const { name, id, public, creator, banned } = rooms[k];
-			r[k] = { name, id, public, creator, online: Object.keys(players[k]).length, banned, size: getSize(rooms[k]) };
+			if (devs[user.id] || public) r[k] = { name, id, public, creator, online: Object.keys(players[k]).length, banned, size: getSize(rooms[k]) };
 		});
 		cb(r);
 	});
