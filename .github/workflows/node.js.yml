@@ -3,8 +3,6 @@
 
 name: Pixelwood Server
 
-concurrency: production
-
 on:
   push:
     branches: [ "main" ]
@@ -13,9 +11,10 @@ on:
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
-    
-    enviornment: production
+
+    env: ${{ env }}
 
     strategy:
       matrix:
