@@ -16,11 +16,11 @@ const decompressMap = require("./assets/decompressMap.js");
 const getSize = require("./assets/getSize.js");
 const devs = { 0: true, 1: true };
 Object.freeze(devs);
-const r = db.get("rooms");
+const r = db.get("rooms") || {};
 const players = {};
-Object.keys(r).forEach(k => players[k] = {});
 const entities = {};
 Object.keys(r).forEach(k => {
+	players[k] = {}
 	entities[k] = [];
 	Object.keys(r[k].map).forEach((s, i) => entities[k][i] = []);
 });
