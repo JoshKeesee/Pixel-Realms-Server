@@ -14,7 +14,8 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    env: ${{ env }}
+    env: 
+      DISCORD_ACCESS_TOKEN: ${{ env.DISCORD_ACCESS_TOKEN }}
 
     strategy:
       matrix:
