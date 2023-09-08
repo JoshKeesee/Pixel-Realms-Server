@@ -30,7 +30,7 @@ Object.keys(r).forEach(k => maps[k] = checkMap(decompressMap(r[k].map)));
 app.use(cors());
 app.use("/profiles", express.static(__dirname + "/profiles"));
 new Login(app);
-require("./assets/discordBot")(io, players, db);
+// require("./assets/discordBot")(io, players, db);
 
 io.on("connection", socket => {
 	let user = {};
