@@ -32,6 +32,9 @@ Object.keys(r).forEach(k => {
 });
 const maps = {};
 Object.keys(r).forEach(k => maps[k] = checkMap(decompressMap(r[k].map)));
+const fs = require('fs');
+const dir = "./profiles";
+if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 
 app.use(cors());
 app.use("/profiles", express.static(__dirname + "/profiles"));
