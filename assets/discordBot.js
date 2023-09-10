@@ -1,7 +1,7 @@
 module.exports = (io, p, db) => {
 	const players = new Map();
-	const fs = require("node:fs");
-	const path = require("node:path");
+	const fs = require("fs");
+	const path = require("path");
 	const discord = require("discord.js");
 	const client = new discord.Client({
 		intents: [
