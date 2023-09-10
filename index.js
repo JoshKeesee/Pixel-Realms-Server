@@ -15,6 +15,7 @@ const compressMap = require("./assets/compressMap");
 const decompressMap = require("./assets/decompressMap");
 const getSize = require("./assets/getSize");
 const enemies = require("./assets/enemies");
+const { performance } = require("perf_hooks");
 const dotenv = require("dotenv");
 dotenv.config();
 const devs = { 0: true, 1: true };
