@@ -174,6 +174,8 @@ const enemies = {
 	inRange(e, id, rad, players) {
 		const p = players[id];
 
+		if (!p) return null;
+
 		const dx = p.dx - e.dx;
 		const dy = p.dy - e.dy;
 
