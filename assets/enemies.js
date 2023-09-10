@@ -53,10 +53,10 @@ const enemies = {
 					e.health -= Math.floor(itemStats[v.i[v.holding]].power / h);
 					e.cooldown = 4;
 					const dx = e.dx, dy = e.dy;
-					if (c.dir == 0) e.dy = e.y = (c.y + 1) * tsize;
-					else if (c.dir == 1) e.dy = e.y = (c.y - 1) * tsize;
-					else if (c.dir == 2) e.dx = e.x = (c.x - 1) * tsize;
-					else if (c.dir == 3) e.dx = e.x = (c.x + 1) * tsize;
+					if (c.dir == 0) e.dy = e.y = (c.y + 2) * tsize;
+					else if (c.dir == 1) e.dy = e.y = (c.y - 2) * tsize;
+					else if (c.dir == 2) e.dx = e.x = (c.x - 2) * tsize;
+					else if (c.dir == 3) e.dx = e.x = (c.x + 2) * tsize;
 					else if (v.dir == 0) e.dy = e.y = (Math.floor(v.dy / tsize) - 1) * tsize;
 					else if (v.dir == 1) e.dy = e.y = (Math.floor(v.dy / tsize) + 1) * tsize;
 					else if (v.dir == 2) e.dx = e.x = (Math.floor(v.dx / tsize) + 1) * tsize;
