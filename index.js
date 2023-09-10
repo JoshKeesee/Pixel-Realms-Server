@@ -15,15 +15,17 @@ const compressMap = require("./assets/compressMap");
 const decompressMap = require("./assets/decompressMap");
 const getSize = require("./assets/getSize");
 const enemies = require("./assets/enemies");
+const dotenv = require("dotenv");
+dotenv.config();
 const devs = { 0: true, 1: true };
 const FPS = 60;
-let startFrames = performance.now()
+let startFrames = performance.now();
 Object.freeze(devs);
 const r = db.get("rooms") || {};
 const players = {};
 const entities = {};
 Object.keys(r).forEach(k => {
-	players[k] = {}
+	players[k] = {};
 	entities[k] = [];
 	Object.keys(r[k].map).forEach((s, i) => entities[k][i] = []);
 });
