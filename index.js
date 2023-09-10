@@ -8,13 +8,16 @@ const badWords = require("badwords-list").regexp;
 const defaultPlayer = require("./assets/defaultPlayer");
 const Login = require("@jkeesee/login");
 const db = require("@jkeesee/json-db");
-const createId = require("./assets/createId.js");
-const newMap = require("./assets/newMap.js");
-const checkMap = require("./assets/checkMap.js");
-const compressMap = require("./assets/compressMap.js");
-const decompressMap = require("./assets/decompressMap.js");
-const getSize = require("./assets/getSize.js");
+const createId = require("./assets/createId");
+const newMap = require("./assets/newMap");
+const checkMap = require("./assets/checkMap");
+const compressMap = require("./assets/compressMap");
+const decompressMap = require("./assets/decompressMap");
+const getSize = require("./assets/getSize");
+const enemies = require("./assets/enemies");
 const devs = { 0: true, 1: true };
+const FPS = 60;
+let startFrames = performance.now()
 Object.freeze(devs);
 const r = db.get("rooms") || {};
 const players = {};
@@ -30,7 +33,7 @@ Object.keys(r).forEach(k => maps[k] = checkMap(decompressMap(r[k].map)));
 app.use(cors());
 app.use("/profiles", express.static(__dirname + "/profiles"));
 new Login(app);
-// require("./assets/discordBot")(io, players, db);
+require("./assets/discordBot")(io, players, db);
 
 io.on("connection", socket => {
 	let user = {};
@@ -101,7 +104,7 @@ io.on("connection", socket => {
 		io.to(user.room).emit("update admins", rooms[user.room].admins);
 	});
 	socket.on("update daylight", time => {
-		if (!user.room || !devs[players[user.room][id].user?.id]) return;
+		if (!user.room || !devs[players[user.room][socket.id].user?.id]) return;
 		const rooms = db.get("rooms") || {};
 		rooms[user.room].daylight = time;
 		db.set({ rooms });
@@ -190,6 +193,7 @@ io.on("connection", socket => {
 		socket.emit("update daylight", rooms[user.room].daylight);
 		socket.emit("init map", maps[user.room]);
 		socket.emit("init players", players[user.room]);
+		socket.emit("init entities", entities[user.room]);
 	});
 	socket.on("leave room", () => {
 		if (!user.room) return;
@@ -235,6 +239,7 @@ io.on("connection", socket => {
 		socket.emit("update daylight", rooms[user.room].daylight);
 		socket.emit("init map", maps[user.room]);
 		socket.emit("init players", players[user.room]);
+		socket.emit("init entities", entities[user.room]);
 		socket.emit("user", p);
 	});
 	socket.on("get rooms", cb => {
@@ -248,17 +253,51 @@ io.on("connection", socket => {
 	});
 });
 
+const updateEnemies = () => {
+	const t = performance.now();
+	const frames = t - startFrames >= 150;
+	const rooms = db.get("rooms") || {};
+	Object.keys(rooms).forEach(k => {
+		const map = checkMap(Array.from(maps[k]));
+		entities[k].filter((s, i) => Object.values(players[k]).some(p => p.scene == i)).forEach((sc, s) => {
+			Object.values(entities[k][s]).filter(e => e?.enemy).forEach((e, i) => {
+				const changes = JSON.stringify(e), eChanges = {};
+				if (frames) enemies.frames(e, map);
+				const kill = enemies.update(e, map, players[k], entities[k][s]);
+				if (typeof kill == "number") {
+					entities[k][s].splice(kill, 1);
+					io.to(k).emit("remove entity", [kill, s]);
+				}
+				Object.keys(e).forEach(k => (JSON.parse(changes)[k] != e[k] && k != "i" && k != "frame") ? eChanges[k] = e[k] : "");
+				if ((kill != i || kill === false) && Object.keys(eChanges).length != 0) io.to(k).emit("update entity", [eChanges, i, s]);
+			});
+		});
+	});
+	if (frames) startFrames = t;
+}
+
 const gameLoop = () => {
-	setTimeout(gameLoop, 24 * 60000 / 24);
 	let sleeping = 0;
 	const rooms = db.get("rooms") || {};
 	Object.keys(rooms).forEach(k => {
 		const r = rooms[k];
 		r.map = checkMap(Array.from(maps[k]));
-		Object.keys(entities[k]).forEach((e, i) => r.map[i].entities = entities[k][i]);
 		Object.values(players[k]).forEach(p => (p.id != "offline" && p.bed) ? sleeping++ : "");
 		r.daylight++;
 		if (r.daylight >= 24 || (sleeping >= Math.ceil(Object.keys(players[k]).length / 2) && sleeping > 0)) r.daylight = 0;
+		const maxEntities = 2;
+		if (r.daylight == 24 || r.daylight == 0) {
+			enemies.despawn(r.map, entities[k]);
+			io.to(k).emit("init entities", entities[k]);
+		} else if (r.daylight >= 15) {
+			r.map.forEach((m, scene) => {
+				if (m.type != "house") {
+					for (let i = 0; i < maxEntities; i++) enemies.spawn({ scene }, maps[k], entities[k][scene]);
+				}
+			});
+			io.to(k).emit("init entities", entities[k]);
+		}
+		Object.keys(entities[k]).forEach((e, i) => r.map[i].entities = entities[k][i]);
 		r.map.forEach(m => {
 			if (m.entities.length == 0) return;
 			m.entities.forEach(e => {
@@ -289,6 +328,7 @@ const gameLoop = () => {
 	db.set({ rooms });
 };
 
-gameLoop();
+setInterval(gameLoop, 24 * 60000 / 24);
+setInterval(updateEnemies, 1000 / FPS);
 
 server.listen(port, () => console.log(`Server listening on port ${port}`));
