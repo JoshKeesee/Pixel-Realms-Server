@@ -5,11 +5,10 @@ const server = require("http").createServer(app);
 const port = process.env.PORT || 3000;
 const io = require("socket.io")(server, { cors: { origin: "*" } });
 const badWords = require("badwords-list").regexp;
-const defaultPlayer = require("./assets/defaultPlayer");
+const defaults = require("./assets/defaults");
 const Login = require("@jkeesee/login");
 const db = require("@jkeesee/json-db");
 const createId = require("./assets/createId");
-const newMap = require("./assets/newMap");
 const checkMap = require("./assets/checkMap");
 const compressMap = require("./assets/compressMap");
 const decompressMap = require("./assets/decompressMap");
@@ -48,7 +47,7 @@ io.on("connection", socket => {
 		user = { ...data, room: user.room };
 		if (!user.room) return;
 		const rooms = db.get("rooms") || {};
-		const p = rooms[user.room].saves[user.id] || defaultPlayer(socket.id);
+		const p = rooms[user.room].saves[user.id] || defaults.player(socket.id, 160, 80, 7);
 		p.name = data.name;
 		p.profile = data.profile;
 		p.id = socket.id;
@@ -63,7 +62,7 @@ io.on("connection", socket => {
 		if (typeof user.id != "number" || !user.room) return;
 		const rooms = db.get("rooms") || {};
 		rooms[user.room].saves[user.id] = players[user.room][socket.id];
-		players[user.room][socket.id] = defaultPlayer(socket.id);
+		players[user.room][socket.id] = defaults.player(socket.id, 160, 80, 7);
 		db.set({ rooms });
 		socket.broadcast.to(user.room).emit("update player", players[user.room][socket.id]);
 		socket.emit("user", players[user.room][socket.id]);
@@ -183,7 +182,7 @@ io.on("connection", socket => {
 		if (rooms[id].banned.includes(ban)) return;
 		if (user.room) socket.leave(user.room);
 		user.room = id;
-		p = defaultPlayer(socket.id);
+		p = defaults.player(socket.id, 160, 80, 7);
 		if (typeof user.id == "number") {
 			p.name = user.name;
 			p.profile = user.profile;
@@ -216,7 +215,7 @@ io.on("connection", socket => {
 		const myRooms = [];
 		Object.keys(rooms).forEach(k => (rooms[k].creator == user.name) ? myRooms.push(k) : "");
 		if (myRooms.length >= 3) return;
-		const p = defaultPlayer(socket.id);
+		const p = defaults.player(socket.id, 160, 80, 7);
 		p.user = user;
 		p.name = user.name;
 		p.profile = user.profile;
@@ -226,7 +225,7 @@ io.on("connection", socket => {
 			public,
 			id: roomId,
 			creator: user.name,
-			map: compressMap(newMap()),
+			map: defaults.map(),
 			admins: { [user.id]: true },
 			saves: {},
 			banned: [],
@@ -237,7 +236,7 @@ io.on("connection", socket => {
 		user.room = roomId;
 		players[user.room] = { [socket.id]: p };
 		entities[user.room] = [[]];
-		maps[user.room] = newMap();
+		maps[user.room] = decompressMap(defaults.map());
 		socket.join(user.room);
 		socket.emit("update admins", rooms[user.room].admins);
 		socket.broadcast.to(user.room).emit("update player", p);
