@@ -39,7 +39,6 @@ if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 app.use(cors());
 app.use("/profiles", express.static(__dirname + "/profiles"));
 new Login(app);
-require("./assets/discordBot")(io, players, db);
 
 io.on("connection", socket => {
 	let user = {};
