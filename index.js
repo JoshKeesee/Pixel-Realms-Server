@@ -47,7 +47,7 @@ io.on("connection", socket => {
 		user = { ...data, room: user.room };
 		if (!user.room) return;
 		const rooms = db.get("rooms") || {};
-		const p = rooms[user.room].saves[user.id] || (rooms[user.room].defaultMap) ? defaults.player(socket.id, 160, 80, 7) : defaults.player(socket.id);
+		const p = rooms[user.room].saves[user.id] ? rooms[user.room].saves[user.id] : (rooms[user.room].defaultMap) ? defaults.player(socket.id, 160, 80, 7) : defaults.player(socket.id);
 		p.name = data.name;
 		p.profile = data.profile;
 		p.id = socket.id;
@@ -209,7 +209,7 @@ io.on("connection", socket => {
 		user.room = null;
 		io.to(user.room).emit("remove player", socket.id);
 	});
-	socket.on("create room", (name, public = true, defaultMap = true) => {
+	socket.on("create room", ({ name, public = true, defaultMap = true }) => {
 		if (typeof user.id != "number") return;
 		const rooms = db.get("rooms") || {};
 		const myRooms = [];
