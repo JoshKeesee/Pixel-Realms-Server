@@ -47,7 +47,7 @@ io.on("connection", socket => {
 		user = { ...data, room: user.room };
 		if (!user.room) return;
 		const rooms = db.get("rooms") || {};
-		const p = rooms[user.room].saves[user.id] || defaults.player(socket.id, 160, 80, 7);
+		const p = rooms[user.room].saves[user.id] || (rooms[user.room].defaultMap) ? defaults.player(socket.id, 160, 80, 7) : defaults.player(socket.id);
 		p.name = data.name;
 		p.profile = data.profile;
 		p.id = socket.id;
@@ -62,7 +62,7 @@ io.on("connection", socket => {
 		if (typeof user.id != "number" || !user.room) return;
 		const rooms = db.get("rooms") || {};
 		rooms[user.room].saves[user.id] = players[user.room][socket.id];
-		players[user.room][socket.id] = defaults.player(socket.id, 160, 80, 7);
+		players[user.room][socket.id] = rooms[user.room].defaultMap ? defaults.player(socket.id, 160, 80, 7) : defaults.player(socket.id);
 		db.set({ rooms });
 		socket.broadcast.to(user.room).emit("update player", players[user.room][socket.id]);
 		socket.emit("user", players[user.room][socket.id]);
@@ -182,7 +182,7 @@ io.on("connection", socket => {
 		if (rooms[id].banned.includes(ban)) return;
 		if (user.room) socket.leave(user.room);
 		user.room = id;
-		p = defaults.player(socket.id, 160, 80, 7);
+		p = rooms[user.room].defaultMap ? defaults.player(socket.id, 160, 80, 7) : defaults.player(socket.id);
 		if (typeof user.id == "number") {
 			p.name = user.name;
 			p.profile = user.profile;
@@ -209,13 +209,13 @@ io.on("connection", socket => {
 		user.room = null;
 		io.to(user.room).emit("remove player", socket.id);
 	});
-	socket.on("create room", (name, public = true) => {
+	socket.on("create room", (name, public = true, defaultMap = true) => {
 		if (typeof user.id != "number") return;
 		const rooms = db.get("rooms") || {};
 		const myRooms = [];
 		Object.keys(rooms).forEach(k => (rooms[k].creator == user.name) ? myRooms.push(k) : "");
 		if (myRooms.length >= 3) return;
-		const p = defaults.player(socket.id, 160, 80, 7);
+		const p = defaultMap ? defaults.player(socket.id, 160, 80, 7) : defaults.player(socket.id);
 		p.user = user;
 		p.name = user.name;
 		p.profile = user.profile;
@@ -225,18 +225,19 @@ io.on("connection", socket => {
 			public,
 			id: roomId,
 			creator: user.name,
-			map: defaults.map(),
+			map: defaultMap ? defaults.map() : defaults.newMap(),
 			admins: { [user.id]: true },
 			saves: {},
 			banned: [],
 			daylight: 0,
+			defaultMap,
 		};
 		db.set({ rooms });
 		if (user.room) socket.leave(user.room);
 		user.room = roomId;
 		players[user.room] = { [socket.id]: p };
 		entities[user.room] = [[]];
-		maps[user.room] = decompressMap(defaults.map());
+		maps[user.room] = decompressMap(rooms[roomId].map);
 		socket.join(user.room);
 		socket.emit("update admins", rooms[user.room].admins);
 		socket.broadcast.to(user.room).emit("update player", p);
