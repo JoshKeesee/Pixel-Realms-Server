@@ -126,6 +126,7 @@ io.on("connection", socket => {
 	socket.on("delete map", s => {
 		if (s < 0 || !user.room) return;
 		maps[user.room].splice(s, 1);
+		entities[user.room].splice(s, 1);
 		socket.broadcast.to(user.room).emit("delete map", s);
 	});
 	socket.on("update entity", data => {

@@ -141,7 +141,7 @@ const enemies = {
 		}
 	},
 	spawn(e = {}, map, entities) {
-		if (typeof e != "object") return;
+		if (typeof e != "object" || !map || !entities) return;
 		if (typeof e.scene != "number") e.scene = players[myId].scene;
 		const openSpot = enemies.getOpenSpot(e.scene, map);
 		if (typeof e.x != "number" || typeof e.y != "number" || e.x < 0 || e.y < 0) { e.x = openSpot.x; e.y = openSpot.y }
