@@ -17,7 +17,7 @@ const enemies = require("./assets/enemies");
 const { performance } = require("perf_hooks");
 const dotenv = require("dotenv");
 dotenv.config();
-const devs = { 0: true, 1: true };
+const devs = { "JoshKeesee": true, "Phanghost": true };
 const FPS = 60;
 let startFrames = performance.now();
 Object.freeze(devs);
@@ -69,17 +69,17 @@ io.on("connection", socket => {
 		user = { room: user.room };
 	});
 
-	socket.on("give item", ([id, item, amount]) => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("give item", [item, amount]) : "");
-	socket.on("tp", ([id, x, y, scene]) => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("tp", [x, y, scene]) : "");
-	socket.on("clear inventory", id => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("clear inventory") : "");
-	socket.on("clear backpack", id => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("clear backpack") : "");
-	socket.on("kill", id => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("kill") : "");
-	socket.on("kick", id => (devs[players[user.room][id].user?.id] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("kick") : "");
+	socket.on("give item", ([id, item, amount]) => (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("give item", [item, amount]) : "");
+	socket.on("tp", ([id, x, y, scene]) => (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("tp", [x, y, scene]) : "");
+	socket.on("clear inventory", id => (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("clear inventory") : "");
+	socket.on("clear backpack", id => (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("clear backpack") : "");
+	socket.on("kill", id => (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("kill") : "");
+	socket.on("kick", id => (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("kick") : "");
 	socket.on("ban", id => {
 		if (typeof user.id != "number" || !user.room || !id) return;
 		const rooms = db.get("rooms") || {};
-		if (!rooms[user.room].admins[user.id] && !devs[user.id]) return;
-		if (rooms[user.room].admins[id] || devs[id]) return;
+		if (!rooms[user.room].admins[user.id] && !devs[user.name]) return;
+		if (rooms[user.room].admins[id] || devs[players[user.room][id].user?.name]) return;
 		const ban = players[user.room][id].user?.id;
 		if (ban) rooms[user.room].banned.push(ban);
 		if (ban) db.set({ rooms });
@@ -88,7 +88,7 @@ io.on("connection", socket => {
 	socket.on("op", id => {
 		if (!user.room || typeof user.id != "number") return;
 		const rooms = db.get("rooms") || {};
-		if (!rooms[user.room].admins[user.id] && !devs[user.id] && user.name != rooms[user.room].creator) return;
+		if (!rooms[user.room].admins[user.id] && !devs[user.name] && user.name != rooms[user.room].creator) return;
 		const p = players[user.room][id];
 		if (!p?.user) return;
 		if (rooms[user.room].admins[p.user.id]) return;
@@ -99,7 +99,7 @@ io.on("connection", socket => {
 	socket.on("unop", id => {
 		if (!user.room || typeof user.id != "number" || id == socket.id) return;
 		const rooms = db.get("rooms") || {};
-		if (!rooms[user.room].admins[user.id] && !devs[user.id]) return;
+		if (!rooms[user.room].admins[user.id] && !devs[user.name]) return;
 		const p = players[user.room][id];
 		if (!p?.user) return;
 		if (!rooms[user.room].admins[p.user.id] || p.user.name == rooms[user.room].creator) return;
@@ -108,7 +108,7 @@ io.on("connection", socket => {
 		io.to(user.room).emit("update admins", rooms[user.room].admins);
 	});
 	socket.on("update daylight", time => {
-		if (!user.room || !devs[players[user.room][socket.id].user?.id]) return;
+		if (!user.room || !devs[players[user.room][socket.id].user?.name]) return;
 		const rooms = db.get("rooms") || {};
 		rooms[user.room].daylight = time;
 		db.set({ rooms });
@@ -165,11 +165,7 @@ io.on("connection", socket => {
 			name: p.name,
 		});
 	});
-	socket.on("ping", cb => {
-		if (!user.room) return;
-		const rooms = db.get("rooms") || {};
-		cb(rooms[user.room].admins);
-	});
+	socket.on("ping", cb => cb());
 	socket.on("check ban", (id, cb) => {
 		const rooms = db.get("rooms") || {};
 		if (!rooms[id]) return;
@@ -253,7 +249,7 @@ io.on("connection", socket => {
 		const r = {};
 		Object.keys(rooms).forEach(k => {
 			const { name, id, public, creator, banned } = rooms[k];
-			if (devs[user.id] || public) r[k] = { name, id, public, creator, online: Object.keys(players[k]).length, banned, size: getSize(rooms[k]) };
+			if (devs[user.name] || public) r[k] = { name, id, public, creator, online: Object.keys(players[k]).length, banned, size: getSize(rooms[k]) };
 		});
 		cb(r);
 	});
