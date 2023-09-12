@@ -116,6 +116,7 @@ io.on("connection", socket => {
 	});
 	socket.on("update map", d => {
 		if (!d || !user.room) return;
+		if (players[user.room][socket.id].editor && !devs[players[user.room][socket.id].user?.name]) return;
 		maps[user.room][d[1]] = d[0];
 		socket.broadcast.to(user.room).emit("update map", d);
 	});
@@ -125,12 +126,14 @@ io.on("connection", socket => {
 	});
 	socket.on("delete map", s => {
 		if (s < 0 || !user.room) return;
+		if (players[user.room][socket.id].editor && !devs[players[user.room][socket.id].user?.name]) return;
 		maps[user.room].splice(s, 1);
 		entities[user.room].splice(s, 1);
 		socket.broadcast.to(user.room).emit("delete map", s);
 	});
 	socket.on("update entity", data => {
 		if (!user.room || !data) return;
+		if (players[user.room][socket.id].editor && !devs[players[user.room][socket.id].user?.name]) return;
 		const p = players[user.room][socket.id];
 		entities[user.room][p.scene][data[1]] = data[0];
 		socket.broadcast.to(user.room).emit("update entity", [...data, p.scene]);
@@ -212,6 +215,7 @@ io.on("connection", socket => {
 		const myRooms = [];
 		Object.keys(rooms).forEach(k => (rooms[k].creator == user.name) ? myRooms.push(k) : "");
 		if (myRooms.length >= 3) return;
+		if (Object.values(rooms).some(r => r.name == name)) return;
 		const p = defaultMap ? defaults.player(socket.id, 160, 80, 7) : defaults.player(socket.id);
 		p.user = user;
 		p.name = user.name;
