@@ -43,8 +43,10 @@ const enemies = {
 						w: tsize,
 						h: tsize,
 					}) &&
-					v.rotate != 0 &&
-					itemStats[v.i[v.holding]].type == "sword" &&
+					v.rotate != 0 && (
+						itemStats[v.i[v.holding]].type == "sword" ||
+						itemStats[v.i[v.holding]].type == "axe"
+					) &&
 					!v.editor &&
 					v.dir == c.dir &&
 					e.cooldown == 0
