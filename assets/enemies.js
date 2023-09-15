@@ -83,8 +83,8 @@ const enemies = {
 		Object.values(entities).filter(t => !t.enemy).every(t => {
 			if (!t || t.id != 2) return false;
 			if (colliding({
-				x: t.x - tsize / 2,
-				y: t.y - tsize / 2,
+				x: t.x,
+				y: t.y,
 				w: 0,
 				h: 0,
 			}, {

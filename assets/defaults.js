@@ -50,6 +50,7 @@ module.exports = {
 			cy: 0,
 			ping: 0,
 			controls: "right",
+			team: null,
 		}
 	},
 	newMap() {
