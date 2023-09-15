@@ -80,7 +80,7 @@ const enemies = {
 			});
 		});
 		let kill = false;
-		Object.values(entities).filter(t => !t.enemy).every(t => {
+		Object.values(entities).filter(t => !t.enemy && !t.animal).every(t => {
 			if (!t || t.id != 2) return false;
 			if (colliding({
 				x: t.x,
