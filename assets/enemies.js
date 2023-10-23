@@ -164,7 +164,7 @@ const enemies = {
 		entities.push(e);
 	},
 	despawn(map, entities) {
-		map.forEach((m, i) => entities[i] = entities[i].map(e => !e.enemy));
+		map.forEach((m, i) => entities[i] = entities[i]?.map(e => !e.enemy));
 	},
 	getOpenSpot(s, map) {
 		let openSpot = Math.floor(Math.random() * enemies.walls(s, map).length);

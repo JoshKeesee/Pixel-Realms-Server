@@ -1,5 +1,5 @@
 {
-  "name": "pixelwood-server",
+  "name": "pixel-realms-server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,15 +9,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JoshKeesee/Pixelwood-Server.git"
+    "url": "git+https://github.com/JoshKeesee/Pixel-Realms-Server.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/JoshKeesee/Pixelwood-Server/issues"
+    "url": "https://github.com/JoshKeesee/Pixel-Realms-Server/issues"
   },
-  "homepage": "https://github.com/JoshKeesee/Pixelwood-Server#readme",
+  "homepage": "https://github.com/JoshKeesee/Pixel-Realms-Server#readme",
   "dependencies": {
     "@jkeesee/json-db": "^3.0.5",
     "@jkeesee/login": "^2.0.1",
@@ -28,7 +28,8 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "multer": "^1.4.5-lts.1",
-    "npm": "^9.8.1",
+    "node": "^21.0.0",
+    "npm": "^10.2.1",
     "socket.io": "^4.7.2"
   }
 }
