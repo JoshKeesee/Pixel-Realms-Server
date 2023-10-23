@@ -4,10 +4,11 @@ const cors = require("cors");
 const server = require("http").createServer(app);
 const port = process.env.PORT || 3000;
 const io = require("socket.io")(server, { cors: { origin: "*" } });
-const badWords = require("badwords-list").regexp;
+const filter = new (require("bad-words"))();
 const defaults = require("./assets/defaults");
 const Login = require("@jkeesee/login");
 const db = require("@jkeesee/json-db");
+db.condense();
 const createId = require("./assets/createId");
 const checkMap = require("./assets/checkMap");
 const compressMap = require("./assets/compressMap");
@@ -174,7 +175,7 @@ io.on("connection", socket => {
 		if (!m || !user.room) return;
 		const p = players[user.room][socket.id];
 		io.to(user.room).emit("chat message", {
-			message: m.replace(badWords, "****"),
+			message: filter.clean(m),
 			name: p.name,
 		});
 	});
