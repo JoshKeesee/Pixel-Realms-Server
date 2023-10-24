@@ -1,12 +1,10 @@
 const { findPath, getIndex, walls } = require("./findPath");
-const { itemStats, enemyTypes, enemyGives, dontCollide, tsize, colliding } = require("./stats");
+const { itemStats, animalTypes, animalGives, dontCollide, tsize, colliding } = require("./stats");
 
-const enemies = {
+const animals = {
 	update(e, map, players, entities, io) {
 		if (!e) return;
-		if (!e.follow) e.follow = enemies.findNearestPlayer(e, 8 * tsize, players);
-		else e.follow = enemies.inRange(e, e.follow, 8 * tsize, players);
-		if (e.x == e.dx && e.y == e.dy && (Math.floor(Math.random() * (50 - 1) + 1) == 1 || e.follow)) {
+		if (e.x == e.dx && e.y == e.dy && (Math.floor(Math.random() * (50 - 1) + 1) == 1)) {
 			let moveX = e.dx, moveY = e.dy;
 			const random = Math.round(Math.random()) == 0 ? tsize : -tsize;
 
@@ -16,7 +14,7 @@ const enemies = {
 			if (moveY < 0) moveY += -random * 2;
 			if (moveX >= map[e.scene].cols) moveX -= -random * 2;
 			if (moveY >= map[e.scene].rows) moveY -= -random * 2;
-			const { dx, dy } = players[e.follow] ? players[e.follow] : { dx: moveX, dy: moveY };
+			const { dx, dy } = { dx: moveX, dy: moveY };
 			findPath(e, dx, dy, map);
 		}
 		e.x += 2 * Math.sign(e.dx - e.x);
@@ -109,22 +107,6 @@ const enemies = {
 			e.health = 0;
 			return entities.indexOf(e);
 		}
-		if (!e.follow) return false;
-		const p = players[e.follow];
-		if (colliding({
-			x: p.x,
-			y: p.y,
-			w: tsize,
-			h: tsize,
-		}, {
-			x: e.x,
-			y: e.y,
-			w: tsize,
-			h: tsize,
-		})) e.zKey = true;
-		else e.zKey = false;
-		if (e.zKey) e.rotate++;
-		else e.rotate = 0;
 		return false;
 	},
 	frames(e, map) {
@@ -150,27 +132,23 @@ const enemies = {
 	spawn(e = {}, map, entities) {
 		if (typeof e != "object" || !map || !entities) return;
 		if (typeof e.scene != "number") e.scene = players[myId].scene;
-		const openSpot = enemies.getOpenSpot(e.scene, map);
+		const openSpot = animals.getOpenSpot(e.scene, map);
 		if (typeof e.x != "number" || typeof e.y != "number" || e.x < 0 || e.y < 0) { e.x = openSpot.x; e.y = openSpot.y }
-		if (!e.type) e.type = Object.keys(enemyTypes)[Math.floor(Math.random() * Object.keys(enemyTypes).length)].replaceAll("_", " ");
+		if (!e.type) e.type = Object.keys(animalTypes)[Math.floor(Math.random() * Object.keys(animalTypes).length)].replaceAll("_", " ");
 		if (e.type == "dark knight") e.helmet = Math.floor(Math.random() * (3 - 1) + 1) == 1;
-		if (!e.gives) e.gives = enemyGives[e.type];
+		if (!e.gives) e.gives = animalGives[e.type];
 		e.dx = e.x;
 		e.dy = e.y;
 		e.frame = 0;
 		e.dir = 0;
-		e.enemy = true;
-		e.follow = null;
-		e.zKey = false;
 		e.health = 100;
-		e.rotate = 0;
-		e.i = [74];
-		e.holding = 0;
+		e.animal = true;
+		e.id = animalTypes[e.type];
 		e.cooldown = 0;
 		entities.push(e);
 	},
 	despawn(map, entities) {
-		map.forEach((m, i) => entities[i] = entities[i]?.map(e => !e.enemy));
+		map.forEach((m, i) => entities[i] = entities[i]?.map(e => !e.animal));
 	},
 	getOpenSpot(s, map) {
 		let openSpot = Math.floor(Math.random() * walls(s, map).length);
@@ -179,28 +157,6 @@ const enemies = {
 		const y = (openSpot - x) / map[s].cols;
 		return { x: x * tsize, y: y * tsize };
 	},
-	inRange(e, id, rad, players) {
-		const p = players[id];
-
-		if (!p) return null;
-
-		const dx = p.dx - e.dx;
-		const dy = p.dy - e.dy;
-
-		if (dx * dx + dy * dy < rad * rad && p.scene == e.scene && !p.editor && p.health > 0) return id;
-		return null;
-	},
-	findNearestPlayer(e, rad, players) {
-		let id = null;
-		Object.values(players).every(c => {
-		const dx = c.dx - e.dx;
-			const dy = c.dy - e.dy;
-
-			if (dx * dx + dy * dy < rad * rad && c.scene == e.scene && !c.editor && c.health > 0) return id = c.id;
-			return false;
-		});
-		return id;
-	},
 };
 
-module.exports = enemies;
+module.exports = animals;

@@ -423,7 +423,53 @@ const itemStats = {
 		name: "Dark Knight Sword",
 		type: "sword",
 		cb: [],
-		power: 4,
+		power: 15,
+	},
+	75: {
+		name: "String",
+		type: "string",
+		cb: [],
+	},
+	76: {
+		name: "Egg",
+		type: "throwable",
+		cb: [],
+	},
+	77: {
+		name: "Chicken",
+		type: "food",
+		cb: [],
+		hunger: 30,
+	},
+	78: {
+		name: "Burnt Chicken",
+		type: "food",
+		cb: [],
+		hunger: -10,
+	},
+	79: {
+		name: "Dark Shard",
+		type: "ingot",
+		cb: [],
+		animate: true,
+	},
+	83: {
+		name: "Dark Knight Pickaxe",
+		type: "pickaxe",
+		cb: [57, 58, 59, 60, 61, 62, 63, 72, 172, 173, 174, 175, 176, 177],
+		power: 15,
+	},
+	84: {
+		name: "Dark Knight Axe",
+		type: "axe",
+		cb: [53, 32000, 64, 65, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 217, 218, 219, 220, 221],
+		power: 15,
+	},
+	85: {
+		name: "Dark Knight Hoe",
+		type: "hoe",
+		cb: [52, 178, 179, 180],
+		power: 15,
 	},
 };
 const blockStats = {
@@ -709,15 +755,55 @@ const blockStats = {
 	},
 };
 
+const enemyTypes = {
+	"dark_knight": true,
+};
+
+const enemyGives = {
+	"dark knight": [79],
+};
+
+const animalTypes = {
+	"rooster": 7,
+	"cat": 23,
+};
+
+const animalGives = {
+	"rooster": [77],
+	"cat": [75],
+};
+
+const dontCollide = [-1, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 54, 55, 56, 178, 179, 180, 78, 79, 80, 81, 82, 83, 102, 103, 104, 105, 106, 107, 136, 137, 138, 139, 140, 141, 172, 173, 174, 175, 176, 177, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 205, 209, 213];
+
 function canBreak(id, v) {
 	return itemStats[id].cb.includes(v);
 }
 
+function colliding(r1, r2) {
+	return !(
+		r1.x > r2.x + r2.w ||
+		r1.x + r1.w < r2.x ||
+		r1.y > r2.y + r2.h ||
+		r1.y + r1.h < r2.y
+	);
+};
+
 Object.freeze(itemStats);
 Object.freeze(blockStats);
+Object.freeze(enemyGives);
+Object.freeze(animalGives);
+Object.freeze(enemyTypes);
+Object.freeze(animalTypes);
 
 module.exports = {
 	itemStats,
 	blockStats,
+	enemyGives,
+	animalGives,
+	enemyTypes,
+	animalTypes,
 	canBreak,
-}
+	dontCollide,
+	colliding,
+	tsize: 80,
+};
