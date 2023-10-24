@@ -4,7 +4,7 @@ const cors = require("cors");
 const server = require("http").createServer(app);
 const port = process.env.PORT || 3000;
 const io = require("socket.io")(server, { cors: { origin: "*" } });
-const filter = new (require("bad-words"))();
+const badWords = require("badwords-list").regex;
 const defaults = require("./assets/defaults");
 const Login = require("@jkeesee/login");
 const db = require("@jkeesee/json-db");
@@ -175,7 +175,11 @@ io.on("connection", socket => {
 		if (!m || !user.room) return;
 		const p = players[user.room][socket.id];
 		io.to(user.room).emit("chat message", {
-			message: filter.clean(m),
+			message: m.replace(badWords, t => {
+				let r = "";
+				t.split("").forEach(() => r += "*");
+				return r;
+			}),
 			name: p.name,
 		});
 	});
@@ -193,7 +197,7 @@ io.on("connection", socket => {
 		if (rooms[id].banned.includes(ban)) return;
 		if (user.room) socket.leave(user.room);
 		user.room = id;
-		p = rooms[user.room].defaultMap ? defaults.player(socket.id, 160, 80, 7) : defaults.player(socket.id);
+		p = rooms[user.room].saves[user.id] ? rooms[user.room].saves[user.id] : rooms[user.room].defaultMap ? defaults.player(socket.id, 160, 80, 7) : defaults.player(socket.id);
 		if (typeof user.id == "number") {
 			p.name = user.name;
 			p.profile = user.profile;
@@ -274,9 +278,10 @@ const updateEnemies = () => {
 	const t = performance.now();
 	const frames = t - startFrames >= 150;
 	const rooms = db.get("rooms") || {};
-	Object.keys(rooms).forEach(k => {
+	Object.keys(rooms).filter(k => Object.keys(players[k]).length).forEach(k => {
 		const map = checkMap(Array.from(maps[k]));
 		entities[k].forEach((sc, s) => {
+			if (sc.length == 0 || !Object.values(players[k]).some(p => p.scene == s)) return;
 			Object.values(entities[k][s]).filter(e => e?.enemy).forEach((e, i) => {
 				const changes = JSON.stringify(e), eChanges = {};
 				if (frames) enemies.frames(e, map);
