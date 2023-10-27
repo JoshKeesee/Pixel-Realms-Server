@@ -71,12 +71,12 @@ io.on("connection", socket => {
 		user = { room: user.room };
 	});
 
-	socket.on("give item", ([id, item, amount]) => id && players[user.room][id] && (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("give item", [item, amount]) : "");
-	socket.on("tp", ([id, x, y, scene]) => id && players[user.room][id] && (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("tp", [x, y, scene]) : "");
-	socket.on("clear inventory", id => id && players[user.room][id] && (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("clear inventory") : "");
-	socket.on("clear backpack", id => id && players[user.room][id] && (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("clear backpack") : "");
-	socket.on("kill", id => id && players[user.room][id] && (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("kill") : "");
-	socket.on("kick", id => id && players[user.room][id] && (devs[players[user.room][id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][id].user?.id]) ? socket.to(id).emit("kick") : "");
+	socket.on("give item", ([id, item, amount]) => id && players[user.room][user.id] && (devs[players[user.room][user.id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][user.id].user?.id]) ? socket.to(id).emit("give item", [item, amount]) : "");
+	socket.on("tp", ([id, x, y, scene]) => id && players[user.room][user.id] && (devs[players[user.room][user.id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][user.id].user?.id]) ? socket.to(id).emit("tp", [x, y, scene]) : "");
+	socket.on("clear inventory", id => id && players[user.room][user.id] && (devs[players[user.room][user.id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][user.id].user?.id]) ? socket.to(id).emit("clear inventory") : "");
+	socket.on("clear backpack", id => id && players[user.room][user.id] && (devs[players[user.room][user.id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][user.id].user?.id]) ? socket.to(id).emit("clear backpack") : "");
+	socket.on("kill", id => id && players[user.room][user.id] && (devs[players[user.room][user.id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][user.id].user?.id]) ? socket.to(id).emit("kill") : "");
+	socket.on("kick", id => id && players[user.room][user.id] && (devs[players[user.room][user.id].user?.name] || db.get("rooms")[user.room].admins[players[user.room][user.id].user?.id]) ? socket.to(id).emit("kick") : "");
 	socket.on("ban", id => {
 		if (typeof user.id != "number" || !user.room || !id) return;
 		const rooms = db.get("rooms") || {};
