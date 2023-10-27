@@ -40,15 +40,15 @@ const animals = {
 						h: tsize,
 					}) &&
 					v.rotate != 0 && (
-						itemStats[v.i[v.holding]].type == "sword" ||
-						itemStats[v.i[v.holding]].type == "axe"
+						itemStats[v.i[v.holding].item].type == "sword" ||
+						itemStats[v.i[v.holding].item].type == "axe"
 					) &&
 					!v.editor &&
 					v.dir == c.dir &&
 					e.cooldown == 0
 				) {
-					const h = !e.helmet ? 1 : itemStats[v.i[v.holding]].power >= 2 ? 2 : 1;
-					e.health -= Math.floor(itemStats[v.i[v.holding]].power / h);
+					const h = !e.helmet ? 1 : itemStats[v.i[v.holding].item].power >= 2 ? 2 : 1;
+					e.health -= Math.floor(itemStats[v.i[v.holding].item].power / h);
 					e.cooldown = 4;
 					if (e.health <= 0) {
 						e.gives.forEach((item, i) => io.to(v.id).emit("give item", [e.gives[i], 1]));
