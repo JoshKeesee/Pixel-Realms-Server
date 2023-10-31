@@ -37,6 +37,8 @@ const fs = require("fs");
 const dir = "./profiles";
 if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 
+const VERSION = "1.0.1";
+
 app.use(cors());
 app.use("/profiles", express.static(__dirname + "/profiles"));
 new Login(app);
@@ -44,13 +46,19 @@ new Login(app);
 io.on("connection", socket => {
 	let user = {};
 
+	socket.on("version", cb => cb(VERSION));
+
 	socket.on("login", data => {
 		if (!data) return;
 		user = { ...data, room: user.room };
 		if (!user.room) return;
 		const rooms = db.get("rooms") || {};
 		const p = rooms[user.room].saves[user.id] ? rooms[user.room].saves[user.id] : (rooms[user.room].defaultMap) ? defaults.player(socket.id, 160, 80, 7) : defaults.player(socket.id);
-		p.name = data.name;
+		p.name = data.name.replace(badWords, t => {
+			let r = "";
+			t.split("").forEach(() => r += "*");
+			return r;
+		});
 		p.profile = data.profile;
 		p.id = socket.id;
 		p.user = user;
@@ -238,7 +246,11 @@ io.on("connection", socket => {
 		p.profile = user.profile;
 		const roomId = createId(7);
 		rooms[roomId] = {
-			name,
+			name: name.replace(badWords, t => {
+				let r = "";
+				t.split("").forEach(() => r += "*");
+				return r;
+			}),
 			public,
 			id: roomId,
 			creator: user.name,
@@ -268,7 +280,12 @@ io.on("connection", socket => {
 		const rooms = db.get("rooms") || {};
 		const r = {};
 		Object.keys(rooms).forEach(k => {
-			const { name, id, public, creator, banned } = rooms[k];
+			const { id, public, creator, banned } = rooms[k];
+			const name = rooms[k].name.replace(badWords, t => {
+				let r = "";
+				t.split("").forEach(() => r += "*");
+				return r;
+			});
 			if (devs[user.name] || public) r[k] = { name, id, public, creator, online: Object.keys(players[k]).length, banned, size: getSize(rooms[k]) };
 		});
 		cb(r);
@@ -336,6 +353,7 @@ const gameLoop = () => {
 		io.to(k).emit("init entities", entities[k]);
 		Object.keys(entities[k]).forEach((e, i) => r.map[i].entities = entities[k][i]);
 		r.map.forEach(m => {
+			if (!m.entities) return;
 			if (m.entities.length == 0) return;
 			m.entities.forEach(e => {
 				let moving = false;
