@@ -26,10 +26,13 @@ Object.freeze(devs);
 const r = db.get("rooms") || {};
 const players = {};
 const entities = {};
+const leaderboard = {};
 Object.keys(r).forEach(k => {
 	players[k] = {};
 	entities[k] = [];
+	leaderboard[k] = {};
 	Object.keys(r[k].map).forEach((s, i) => entities[k][i] = []);
+	Object.values(r[k].saves).forEach(s => leaderboard[k][s.user.id] = { xp: s.xp || 0, id: s.id, name: s.name });
 });
 const maps = {};
 Object.keys(r).forEach(k => maps[k] = checkMap(decompressMap(r[k].map)));
@@ -62,6 +65,8 @@ io.on("connection", socket => {
 		p.profile = data.profile;
 		p.id = socket.id;
 		p.user = user;
+		const k = rooms[user.room].teams;
+		if (rooms[user.room].teamMap) p.team = k[Math.floor(Math.random() * k.length)];
 		players[user.room][socket.id] = p;
 		db.set({ rooms });
 		socket.broadcast.to(user.room).emit("update player", players[user.room][socket.id]);
@@ -73,6 +78,8 @@ io.on("connection", socket => {
 		const rooms = db.get("rooms") || {};
 		rooms[user.room].saves[user.id] = players[user.room][socket.id];
 		players[user.room][socket.id] = rooms[user.room].defaultMap ? defaults.player(socket.id, 160, 80, 7) : defaults.player(socket.id);
+		const k = rooms[user.room].teams;
+		if (rooms[user.room].teamMap) p.team = k[Math.floor(Math.random() * k.length)];
 		db.set({ rooms });
 		socket.broadcast.to(user.room).emit("update player", players[user.room][socket.id]);
 		socket.emit("user", players[user.room][socket.id]);
@@ -167,7 +174,13 @@ io.on("connection", socket => {
 	socket.on("update player", changes => {
 		if (!changes || !user.room) return;
 		const p = players[user.room][socket.id];
-		Object.keys(changes).forEach(k => p[k] = changes[k]);
+		Object.keys(changes).forEach(k => {
+			p[k] = changes[k];
+			if (k == "xp" && p.user) {
+				leaderboard[user.room][p.user.id] = { name: p.name, xp: p.xp, id: p.user.id };
+				io.to(user.room).emit("update leaderboard", leaderboard[user.room][p.user.id]);
+			}
+		});
 		socket.broadcast.to(user.room).emit("update player", { ...changes, id: socket.id });
 	});
 	socket.on("disconnect", () => {
@@ -211,7 +224,11 @@ io.on("connection", socket => {
 			p.name = user.name;
 			p.profile = user.profile;
 			p.user = user;
+			if (!p.xp) p.xp = 0;
 		}
+		if (!rooms[user.room].teams) rooms[user.room].teams = [];
+		const k = rooms[user.room].teams;
+		if (rooms[user.room].teamMap) p.team = k[Math.floor(Math.random() * k.length)];
 		players[user.room][socket.id] = p;
 		db.set({ rooms });
 		socket.join(user.room);
@@ -222,6 +239,7 @@ io.on("connection", socket => {
 		socket.emit("init map", maps[user.room]);
 		socket.emit("init players", players[user.room]);
 		socket.emit("init entities", entities[user.room]);
+		socket.emit("init leaderboard", leaderboard[user.room]);
 	});
 	socket.on("leave room", () => {
 		if (!user.room) return;
@@ -233,7 +251,7 @@ io.on("connection", socket => {
 		user.room = null;
 		io.to(user.room).emit("remove player", socket.id);
 	});
-	socket.on("create room", ({ name, public = true, defaultMap = true }) => {
+	socket.on("create room", ({ name, public = true, defaultMap = true, teamMap = false, numTeams = 0 }) => {
 		if (typeof user.id != "number") return;
 		const rooms = db.get("rooms") || {};
 		const myRooms = [];
@@ -256,16 +274,25 @@ io.on("connection", socket => {
 			creator: user.name,
 			map: defaultMap ? defaults.map() : defaults.newMap(),
 			admins: { [user.id]: true },
+			leaderboard: { [user.id]: { xp: 0, id: user.id, name: user.name } },
+			teams: [],
 			saves: {},
 			banned: [],
 			daylight: 0,
 			defaultMap,
+			teamMap,
+			numTeams,
 		};
+		const teamColors = ["red", "blue", "yellow", "green"];
+		if (teamMap) {
+			for (let i = 0; i < numTeams; i++) rooms[roomId].teams[i] = teamColors[i];
+		}
 		db.set({ rooms });
 		if (user.room) socket.leave(user.room);
 		user.room = roomId;
 		players[user.room] = { [socket.id]: p };
 		entities[user.room] = [[]];
+		leaderboard[user.room] = rooms[user.room].leaderboard;
 		maps[user.room] = decompressMap(rooms[roomId].map);
 		socket.join(user.room);
 		socket.emit("update admins", rooms[user.room].admins);
@@ -274,6 +301,7 @@ io.on("connection", socket => {
 		socket.emit("init map", maps[user.room]);
 		socket.emit("init players", players[user.room]);
 		socket.emit("init entities", entities[user.room]);
+		socket.emit("init leaderboard", leaderboard[user.room]);
 		socket.emit("user", p);
 	});
 	socket.on("get rooms", cb => {
@@ -299,6 +327,7 @@ const updateEntities = () => {
 	Object.keys(rooms).filter(k => Object.keys(players[k]).length).forEach(k => {
 		const map = checkMap(Array.from(maps[k]));
 		entities[k].forEach((sc, s) => {
+			if (!sc) entities[k][s] = [];
 			if (sc.length == 0 || !Object.values(players[k]).some(p => p.scene == s)) return;
 			Object.values(entities[k][s]).filter(e => e?.enemy).forEach((e, i) => {
 				const changes = JSON.stringify(e), eChanges = {};
@@ -352,6 +381,8 @@ const gameLoop = () => {
 		});
 		io.to(k).emit("init entities", entities[k]);
 		Object.keys(entities[k]).forEach((e, i) => r.map[i].entities = entities[k][i]);
+		if (!r.leaderboard) r.leaderboard = {};
+		Object.keys(leaderboard[k]).forEach((e, i) => r.leaderboard[e] = leaderboard[k][e]);
 		r.map.forEach(m => {
 			if (!m.entities) return;
 			if (m.entities.length == 0) return;

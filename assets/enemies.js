@@ -111,6 +111,10 @@ const enemies = {
 		}
 		if (!e.follow) return false;
 		const p = players[e.follow];
+		if (!p) {
+			e.follow = null;
+			return false;
+		}
 		if (colliding({
 			x: p.x,
 			y: p.y,

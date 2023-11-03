@@ -354,6 +354,7 @@ const itemStats = {
 		cb: [],
 		hunger: -5,
 		stackable: true,
+		xp: -20,
 	},
 	59: {
 		name: "Carrot",
@@ -368,6 +369,7 @@ const itemStats = {
 		cb: [],
 		hunger: 17,
 		stackable: true,
+		xp: 70,
 	},
 	61: {
 		name: "Wheat",
@@ -381,6 +383,7 @@ const itemStats = {
 		cb: [],
 		hunger: 40,
 		stackable: true,
+		xp: 80,
 	},
 	63: {
 		name: "Bow",
@@ -468,6 +471,7 @@ const itemStats = {
 		cb: [],
 		hunger: 30,
 		stackable: true,
+		xp: 70,
 	},
 	78: {
 		name: "Burnt Chicken",
@@ -475,6 +479,7 @@ const itemStats = {
 		cb: [],
 		hunger: -10,
 		stackable: true,
+		xp: -10,
 	},
 	79: {
 		name: "Dark Shard",
@@ -509,6 +514,7 @@ const blockStats = {
 		durability: 1,
 		gives: [55],
 		stackable: true,
+		xp: 90,
 	},
 	53: {
 		name: "Tree",
@@ -516,21 +522,25 @@ const blockStats = {
 		durability: 1,
 		gives: [24, 24],
 		stackable: true,
+		xp: 50,
 	},
 	54: {
 		name: "Flowers",
 		type: "plant",
 		durability: 1,
+		xp: 0,
 	},
 	55: {
 		name: "Flowers",
 		type: "plant",
 		durability: 1,
+		xp: 0,
 	},
 	56: {
 		name: "Flowers",
 		type: "plant",
 		durability: 1,
+		xp: 0,
 	},
 	57: {
 		name: "Gold Ore",
@@ -538,6 +548,7 @@ const blockStats = {
 		durability: 1,
 		gives: [25],
 		stackable: true,
+		xp: 100,
 	},
 	58: {
 		name: "Iron Ore",
@@ -545,6 +556,7 @@ const blockStats = {
 		durability: 2,
 		gives: [26],
 		stackable: true,
+		xp: 120,
 	},
 	59: {
 		name: "Ruby Ore",
@@ -552,6 +564,7 @@ const blockStats = {
 		durability: 4,
 		gives: [27],
 		stackable: true,
+		xp: 140,
 	},
 	60: {
 		name: "Diamond Ore",
@@ -559,6 +572,7 @@ const blockStats = {
 		durability: 6,
 		gives: [28],
 		stackable: true,
+		xp: 160,
 	},
 	61: {
 		name: "Emerald Ore",
@@ -566,6 +580,7 @@ const blockStats = {
 		durability: 8,
 		gives: [29],
 		stackable: true,
+		xp: 220,
 	},
 	62: {
 		name: "Platinum Ore",
@@ -573,6 +588,7 @@ const blockStats = {
 		durability: 10,
 		gives: [30],
 		stackable: true,
+		xp: 200,
 	},
 	63: {
 		name: "Coal Ore",
@@ -580,6 +596,7 @@ const blockStats = {
 		durability: 3,
 		gives: [31],
 		stackable: true,
+		xp: 80,
 	},
 	64: {
 		name: "Workbench",
@@ -587,6 +604,7 @@ const blockStats = {
 		durability: 2,
 		gives: [69],
 		stackable: true,
+		xp: 0,
 	},
 	65: {
 		name: "Chest",
@@ -594,49 +612,58 @@ const blockStats = {
 		durability: 2,
 		gives: [70],
 		stackable: true,
+		xp: 0,
 	},
 	67: {
 		name: "Sign",
 		type: "utility",
 		gives: [],
+		xp: 0,
 	},
 	68: {
 		name: "Portal",
 		type: "utility",
 		gives: [],
+		xp: 0,
 	},
 	72: {
 		name: "Furnace",
 		type: "utility",
 		durability: 2,
 		gives: [71],
+		xp: 0,
 	},
 	77: {
 		name: "Ladder",
 		type: "utility",
 		gives: [],
+		xp: 0,
 	},
 	132: {
 		name: "Bed",
 		type: "utility",
 		gives: [],
+		xp: 0,
 	},
 	133: {
 		name: "Bed",
 		type: "utility",
 		gives: [],
 		height: 2,
+		xp: 0,
 	},
 	134: {
 		name: "Wardrobe",
 		type: "utility",
 		gives: [],
+		xp: 0,
 	},
 	135: {
 		name: "Wardrobe",
 		type: "utility",
 		gives: [],
 		height: 2,
+		xp: 0,
 	},
 	172: {
 		name: "Rail",
@@ -644,6 +671,7 @@ const blockStats = {
 		durability: 0.5,
 		gives: [73],
 		stackable: true,
+		xp: 0,
 	},
 	173: {
 		name: "Rail",
@@ -651,6 +679,7 @@ const blockStats = {
 		durability: 0.5,
 		gives: [73],
 		stackable: true,
+		xp: 0,
 	},
 	174: {
 		name: "Rail",
@@ -658,6 +687,7 @@ const blockStats = {
 		durability: 0.5,
 		gives: [73],
 		stackable: true,
+		xp: 0,
 	},
 	175: {
 		name: "Rail",
@@ -665,6 +695,7 @@ const blockStats = {
 		durability: 0.5,
 		gives: [73],
 		stackable: true,
+		xp: 0,
 	},
 	176: {
 		name: "Rail",
@@ -672,6 +703,7 @@ const blockStats = {
 		durability: 0.5,
 		gives: [73],
 		stackable: true,
+		xp: 0,
 	},
 	177: {
 		name: "Rail",
@@ -679,6 +711,7 @@ const blockStats = {
 		durability: 0.5,
 		gives: [73],
 		stackable: true,
+		xp: 0,
 	},
 	178: {
 		name: "Wheat",
@@ -686,6 +719,7 @@ const blockStats = {
 		durability: 1,
 		gives: [61],
 		stackable: true,
+		xp: 60,
 	},
 	179: {
 		name: "Carrots",
@@ -693,6 +727,7 @@ const blockStats = {
 		durability: 1,
 		gives: [59],
 		stackable: true,
+		xp: 60,
 	},
 	180: {
 		name: "Potatoes",
@@ -700,6 +735,7 @@ const blockStats = {
 		durability: 1,
 		gives: [56],
 		stackable: true,
+		xp: 60,
 	},
 	181: {
 		name: "Fence",
@@ -707,6 +743,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	182: {
 		name: "Fence",
@@ -714,6 +751,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	183: {
 		name: "Fence",
@@ -721,6 +759,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	184: {
 		name: "Fence",
@@ -728,6 +767,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	185: {
 		name: "Fence",
@@ -735,6 +775,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	186: {
 		name: "Fence",
@@ -742,6 +783,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	187: {
 		name: "Fence",
@@ -749,6 +791,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	188: {
 		name: "Fence",
@@ -756,6 +799,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	189: {
 		name: "Fence",
@@ -763,6 +807,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	190: {
 		name: "Fence",
@@ -770,6 +815,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	191: {
 		name: "Fence",
@@ -777,6 +823,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	217: {
 		name: "Fence",
@@ -784,6 +831,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	218: {
 		name: "Fence",
@@ -791,6 +839,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	219: {
 		name: "Fence",
@@ -798,6 +847,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	220: {
 		name: "Fence",
@@ -805,6 +855,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	221: {
 		name: "Fence",
@@ -812,6 +863,7 @@ const blockStats = {
 		durability: 2,
 		gives: [72],
 		stackable: true,
+		xp: 0,
 	},
 	32000: {
 		name: "Torch",
@@ -819,6 +871,7 @@ const blockStats = {
 		durability: 0.02,
 		gives: [32],
 		stackable: true,
+		xp: 0,
 	},
 };
 const recipes = {
