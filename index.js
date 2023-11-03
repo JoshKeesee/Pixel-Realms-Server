@@ -40,7 +40,7 @@ const fs = require("fs");
 const dir = "./profiles";
 if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 
-const VERSION = "1.0.1";
+const VERSION = "1.0.2";
 
 app.use(cors());
 app.use("/profiles", express.static(__dirname + "/profiles"));
@@ -177,7 +177,7 @@ io.on("connection", socket => {
 		Object.keys(changes).forEach(k => {
 			p[k] = changes[k];
 			if (k == "xp" && p.user) {
-				leaderboard[user.room][p.user.id] = { name: p.name, xp: p.xp, id: p.user.id };
+				leaderboard[user.room][p.user.id] = { name: p.name, xp: p.xp, id: p.user.id, team: p.team };
 				io.to(user.room).emit("update leaderboard", leaderboard[user.room][p.user.id]);
 			}
 		});
@@ -274,7 +274,7 @@ io.on("connection", socket => {
 			creator: user.name,
 			map: defaultMap ? defaults.map() : defaults.newMap(),
 			admins: { [user.id]: true },
-			leaderboard: { [user.id]: { xp: 0, id: user.id, name: user.name } },
+			leaderboard: { [user.id]: { xp: 0, id: user.id, name: user.name, team: p.team } },
 			teams: [],
 			saves: {},
 			banned: [],
