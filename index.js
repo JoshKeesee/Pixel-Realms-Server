@@ -308,13 +308,13 @@ io.on("connection", socket => {
 		const rooms = db.get("rooms") || {};
 		const r = {};
 		Object.keys(rooms).forEach(k => {
-			const { id, public, creator, banned } = rooms[k];
+			const { id, public, creator, banned, teamMap } = rooms[k];
 			const name = rooms[k].name.replace(badWords, t => {
 				let r = "";
 				t.split("").forEach(() => r += "*");
 				return r;
 			});
-			if (devs[user.name] || public) r[k] = { name, id, public, creator, online: Object.keys(players[k]).length, banned, size: getSize(rooms[k]) };
+			if (devs[user.name] || public) r[k] = { name, id, public, creator, online: Object.keys(players[k]).length, banned, teamMap, size: getSize(rooms[k]) };
 		});
 		cb(r);
 	});
