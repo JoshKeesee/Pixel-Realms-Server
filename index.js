@@ -241,6 +241,16 @@ io.on("connection", socket => {
 		socket.emit("init entities", entities[user.room]);
 		socket.emit("init leaderboard", leaderboard[user.room]);
 	});
+	socket.on("delete room", (roomId, cb) => {
+		const rooms = db.get("rooms") || {};
+		if (!rooms[roomId] || (rooms[roomId].creator != user.name && !devs[user.name])) return;
+		const ban = user ? user.id : "";
+		if (rooms[roomId].banned.includes(ban)) return;
+		delete rooms[roomId];
+		db.set({ rooms });
+		io.to(roomId).emit("kick");
+		cb();	
+	});
 	socket.on("leave room", () => {
 		if (!user.room) return;
 		const rooms = db.get("rooms") || {};
@@ -324,7 +334,8 @@ const updateEntities = () => {
 	const t = performance.now();
 	const frames = t - startFrames >= 150;
 	const rooms = db.get("rooms") || {};
-	Object.keys(rooms).filter(k => Object.keys(players[k]).length).forEach(k => {
+	Object.keys(rooms).forEach(k => {
+		if (Object.keys(players[k]).length == 0) return;
 		const map = checkMap(Array.from(maps[k]));
 		entities[k].forEach((sc, s) => {
 			if (!sc) entities[k][s] = [];
@@ -360,6 +371,7 @@ const gameLoop = () => {
 	let sleeping = 0;
 	const rooms = db.get("rooms") || {};
 	Object.keys(rooms).forEach(k => {
+		if (Object.keys(players[k]).length == 0) return;
 		const r = rooms[k];
 		r.map = checkMap(Array.from(maps[k]));
 		Object.values(players[k]).forEach(p => (p.id != "offline" && p.bed) ? sleeping++ : "");
