@@ -2,3 +2,5 @@
 replit.nix
 node_modules
 profiles
+.codesandbox
+.devcontainer
